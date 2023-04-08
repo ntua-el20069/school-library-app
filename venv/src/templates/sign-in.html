@@ -1,12 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title> sign in </title>
+        <style>
+            body{
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            
+            form {
+                background-color: #cfd3ce;
+                padding: 2em;
+            }
+
+            label {
+                font-size: 0.8em;
+            }
+            input[type=text], input[type=password]{
+                width: 100%;
+                padding: 1em;
+                border: 1px solid #bbbbbb;
+                border-radius: 5px;
+                margin-top: 1em;
+                box-sizing: border-box;
+           }
+
+
+           input[type=submit]{
+                background-color: #34626C;
+                font-size:  1.2em;
+                color: white;
+           }
+
+        </style>
+    </head>
 <body>
-    <h1>Sign in Page ...</h1>
+    <!-- action="{{ url_for('handle_signin') }}" -->
+    <form  method="post" onsubmit="return(validate());">
+        <fieldset>
+            <legend> User Sign In </legend>
+            <label for="username"> Username</label><br>
+            <input type="text" id="username" name="username" required placeholder="username"></input><br>
+            <label for="pass"> Password </label><br>
+            <input type="password" id="pass" name="pass" required placeholder="password" ><br>
+
+        <input type= "submit" value="Submission"><br>
+    </form>
 </body>
+    <script>
+        // Here I make a list in order to use the site without database
+        // use one of the usernames and the matching password
+        // to understand the operation of this script
+        
+        // constructor of User object 
+        // it has some attributes like User Relational Schema that we will implement in DB
+        function User(username,password,type,approval) {
+            this.username = username;
+            this.password = password;
+            this.type = type;
+            this.approval = approval;
+        }
+
+        // initialize some Users to play with...
+        const nikos = new User('nikospapa', 'anna','student',true);
+        const achilleas = new User('brachilles', 'abba','student',false);
+        const kostis = new User('elgreko', 'akka','student',false);
+        const lib = new User('lib', 'eatbook', 'librarian', true);
+        const admin = new User('admin', 'unpaictable', 'admin', true);
+
+        usersList = [nikos, achilleas, kostis, lib, admin];
+        
+        // a function that checks if the username is a username of users in list usersList 
+        function validate(){
+            const x = document.querySelector('#username').value;
+            const y = document.querySelector('#pass').value;
+            for (user of usersList){
+                if (x==user.username) {
+                    alert(`user exists! and he/she is a ${user.type}`);
+                    if (y == user.password) {alert('Successful sign in!'); return true;}
+                    else {alert('password is incorrect!'); return false;}
+                }
+            }
+            alert('user does not exist!');
+            return false;
+        }
+    </script>
+
 </html>

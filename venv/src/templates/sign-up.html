@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title> sign up to school library network </title>
+        <title> sign up </title>
         <style>
             body{
                 font-family: Arial, Helvetica, sans-serif;
@@ -37,7 +37,7 @@
     </head>
 
     <body>
-        <form onsubmit="return(validate());">
+        <form method='post' onsubmit="return(validate());">
             <fieldset>
                 <legend> User Sign Up </legend>
                 <label for="username"> Username</label><br>
@@ -74,6 +74,9 @@
                 <input type="submit" value="Submission">
             </fieldset>
         </form>
+
+    </body>
+
         <script>
             function validate(){
                 if(document.querySelector('#pass1').value === document.querySelector('#pass2').value)
@@ -98,6 +101,6 @@
     
         
     
-    </body>
+    
     
 </html>
