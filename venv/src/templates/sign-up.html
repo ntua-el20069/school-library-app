@@ -1,12 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1> Sign up Page...</h1>
-</body>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title> sign up to school library network </title>
+        <style>
+            body{
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            
+            form {
+                background-color: #cfd3ce;
+                padding: 2em;
+            }
+
+            label {
+                font-size: 0.8em;
+            }
+            input[type=text], input[type=password]{
+                width: 100%;
+                padding: 1em;
+                border: 1px solid #bbbbbb;
+                border-radius: 5px;
+                margin-top: 1em;
+                box-sizing: border-box;
+           }
+
+
+           input[type=submit]{
+                background-color: #34626C;
+                font-size:  1.2em;
+                color: white;
+           }
+
+        </style>
+    </head>
+
+    <body>
+        <form onsubmit="return(validate());">
+            <fieldset>
+                <legend> User Sign Up </legend>
+                <label for="username"> Username</label><br>
+                <input type="text" id="username" name="username" required placeholder="type your username"><br>
+                <label for="pass1"> Password </label><br>
+                <input type="password" id="pass1" name="pass1" required placeholder="password with at least 5 characters including numbers and letters" pattern="^(?=[^0-9]*[0-9])(?=[^a-z]*[a-z]).{5,}$"><br>
+                <label for="pass2"> Password Confirmation </label><br>
+                <input type="password" id="pass2" name="pass2" required placeholder="write the password again..." pattern="^(?=[^0-9]*[0-9])(?=[^0-9]*[0-9]).{5,}$"><br>
+                <label for="user-type"> User Type</label><br>
+                
+                
+                <label for="student" style="display: inline;">Student  </label> 
+                <input type="radio" id="student" value="student" name="userType" checked> <br>
+                
+                <label for="teacher" style="display: inline;">Teacher  </label> 
+                <input type="radio" id="teacher" value="teacher" name="userType" > <br>
+
+                
+                <label for="librarian" style="display: inline;">Librarian  </label> 
+                <input type="radio" id="librarian" value="librarian" name="userType" > <br>
+
+                
+                <label for="admin" style="display: inline;">Admin  </label> 
+                <input type="radio" id="admin" value="admin" name="userType" > <br>
+            
+                
+                <label for="schools">School</label>
+                <input list="schools" name="school" required>
+                <datalist id="schools">
+                    <select name="school" id="school">
+                         <!-- εδώ θα μπούν οι επιλογές που δημιουργούνται από τη JavaScript -->
+                    </select>
+                    </datalist>  
+                <input type="submit" value="Submission">
+            </fieldset>
+        </form>
+        <script>
+            function validate(){
+                if(document.querySelector('#pass1').value === document.querySelector('#pass2').value)
+                return true;
+                alert('passwords are not the same');
+                return false;
+            }   
+
+            const schools = ['13rd Junior High Scool Peristeri', '9th High School Peristeri', '22nd Primary School Peristeri'];
+        const schoolSelect = document.querySelector("#school");
+        console.log(schoolSelect);
+        console.log(schools);
+        for (let school of schools){
+            let option = document.createElement("option");
+            option.value = school;
+            option.textContent = school;
+            if (school=="13rd Junior High Scool Peristeri") option.setAttribute("selected", "selected");
+            schoolSelect.appendChild(option);
+        }
+        </script>
+    
+    
+        
+    
+    </body>
+    
 </html>
