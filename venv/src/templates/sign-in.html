@@ -62,7 +62,7 @@
             this.approval = approval;
         }
 
-        // initialize some Users to play with...
+        // initialize some Users to play with... if you do not have a database
         const nikos = new User('nikospapa', 'anna','student',true);
         const achilleas = new User('brachilles', 'abba','student',false);
         const kostis = new User('elgreko', 'akka','student',false);
@@ -71,8 +71,12 @@
 
         usersList = [nikos, achilleas, kostis, lib, admin];
         
-        // a function that checks if the username is a username of users in list usersList 
+        
         function validate(){
+            // the below is if you want to test sign in page and don't use database
+            // checks if the username is a username of users in list usersList
+            
+            /*
             const x = document.querySelector('#username').value;
             const y = document.querySelector('#pass').value;
             for (user of usersList){
@@ -84,6 +88,11 @@
             }
             alert('user does not exist!');
             return false;
+            */
+
+
+            // if you use database always return true
+           return true; 
         }
     </script>
 

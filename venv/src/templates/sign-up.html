@@ -78,6 +78,10 @@
     </body>
 
         <script>
+
+        const schools = ['13rd Junior High Scool Peristeri', '9th High School Peristeri', '22nd Primary School Peristeri'];
+        const schoolSelect = document.querySelector("#school");
+            
             function validate(){
                 if(document.querySelector('#pass1').value === document.querySelector('#pass2').value)
                 return true;
@@ -85,10 +89,9 @@
                 return false;
             }   
 
-            const schools = ['13rd Junior High Scool Peristeri', '9th High School Peristeri', '22nd Primary School Peristeri'];
-        const schoolSelect = document.querySelector("#school");
         console.log(schoolSelect);
         console.log(schools);
+        
         for (let school of schools){
             let option = document.createElement("option");
             option.value = school;
