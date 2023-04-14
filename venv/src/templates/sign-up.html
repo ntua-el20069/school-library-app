@@ -79,7 +79,7 @@
 
         <script>
 
-        const schools = ['13rd Junior High Scool Peristeri', '9th High School Peristeri', '22nd Primary School Peristeri'];
+        //const schools = ['13rd Junior High Scool Peristeri', '9th High School Peristeri', '22nd Primary School Peristeri'];
         const schoolSelect = document.querySelector("#school");
             
             function validate(){
@@ -88,17 +88,36 @@
                 alert('passwords are not the same');
                 return false;
             }   
-
-        console.log(schoolSelect);
-        console.log(schools);
         
-        for (let school of schools){
+            fetch('/schools-list')
+                .then(response => response.json())
+                .then(schools => {
+                console.log(schools); 
+            });
+
+        
+        console.log(schoolSelect);
+
+        fetch('/schools-list')
+        .then(response => response.json())
+        .then(schools => {
+            const myList = schools.schools.map(item => item);
+            console.log(myList); 
+            for (let school of myList){
             let option = document.createElement("option");
             option.value = school;
             option.textContent = school;
-            if (school=="13rd Junior High Scool Peristeri") option.setAttribute("selected", "selected");
+            //if (school=="13rd Junior High Scool Peristeri") option.setAttribute("selected", "selected");
             schoolSelect.appendChild(option);
         }
+        });
+        
+
+        
+
+
+        
+        
         </script>
     
     

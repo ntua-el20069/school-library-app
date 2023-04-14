@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, url_for, flash, redirect
+from flask import Flask, render_template, request, url_for, flash, redirect, jsonify
 import mysql.connector 
+import random
 
 app = Flask(__name__)
 
@@ -14,7 +15,7 @@ db = mysql.connector.connect(
 ## run the page '/create' which creates schema
 ## and then '/insert' which inserts data into table User
 ## sign in operates according to the database (or not if you use the JS comments in "sign-in.html" 
-## and the appropriate code in python
+## and the appropriate code in python)
 ## Attention!! when you run '/create' database drops and a new is created 
 ## So all data are lost !
 
@@ -65,8 +66,8 @@ def create():
     return 'creates a db and a table inside'
 
 # insert data into User 
-@app.route('/insert')
-def insert():
+@app.route('/insert-user')
+def insert_user():
     fd = open('venv\csv\insert-user.csv', 'r', encoding="utf-8")
     csvFile = fd.read()
     fd.close()
@@ -97,6 +98,55 @@ def insert():
             break
     return out
 
+# insert data into School_Library 
+@app.route('/insert-lib')
+def insert_lib():
+    fd = open('venv\csv\insert-lib.csv', 'r', encoding="utf-8")
+    csvFile = fd.read()
+    fd.close()
+    cursor = db.cursor()
+    csvTuples = csvFile.split('\n')
+    out = ''
+    #return csvTuples
+    count = 0
+    for lib in csvTuples:
+        count += 1
+        name = str(random.randint(1,50)) + ' '
+        if count%3 == 0: name += 'Primary School'
+        elif count%3==1: name += 'Junior High School'
+        else: name += 'High School'
+        if lib:
+            attr = lib.split(',')
+            address, city, phone, email, principal, library_admin = attr
+            out = out + 'address={}, name={}, city={}, phone={}, email={}, principal={}, library_admin={}'.format(address, name, city, phone, email, principal, library_admin) + '<br>'
+        
+            try:
+                sql_query = """insert into School_Library values('{}','{}','{}','{}','{}','{}','{}');""".format(address, name, city, phone, email, principal, library_admin)
+                cursor.execute(sql_query)
+                db.commit()
+            except mysql.connector.Error as err:
+                print("Something went wrong: ", err)
+        else:
+            break
+            
+    return out
+
+@app.route('/insert-signup-approval')
+def insert_signup_approval():
+    cursor = db.cursor()
+    cursor.execute("SELECT username FROM User")
+    users = cursor.fetchall()
+    cursor.execute("SELECT address FROM School_Library")
+    libs = cursor.fetchall()
+    out = ''
+    for tup in users:
+        address =  random.choice(libs)[0]
+        username = tup[0]
+        out = out + username + ' ' + address + '<br>'
+        sql_query = "insert into Signup_Approval values('{}','{}');".format(username, address)
+        cursor.execute(sql_query)
+        db.commit()
+    return out
 
 @app.route("/signup", methods=['GET', 'POST'])
 def signup_form_redirect():
@@ -115,8 +165,14 @@ def signup_form_redirect():
         return redirect(url_for('notApprovedUser'))
     else:
         return render_template('sign-up.html')
-    
-    
+
+@app.route('/schools-list')
+def get_schools_list():
+    cursor = db.cursor()
+    cursor.execute("SELECT name, address FROM School_Library")
+    schools = cursor.fetchall()
+    return jsonify(schools=schools)
+
 @app.route("/signin", methods=['GET', 'POST'])
 def handle_signin():
     if request.method == 'POST':     # here I handle post request by submitting the sign in form
@@ -152,6 +208,7 @@ def notApprovedUser():
 @app.route('/admin')
 def admin():
     cursor = db.cursor()
+    # find librarians that are not approved yet
     cursor.execute("SELECT * FROM User where valid=0 and type='librarian';")
     notValidUsers = cursor.fetchall()
     out = 'Not valid librarians (username, password) <br>'
