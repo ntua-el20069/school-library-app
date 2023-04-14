@@ -101,6 +101,17 @@ def insert():
 @app.route("/signup", methods=['GET', 'POST'])
 def signup_form_redirect():
     if request.method == 'POST':
+        username = request.form.get('username')    
+        password = request.form.get('pass1')     ### pass1 is the name! of the input field
+        type = request.form.get('userType')
+        
+        cursor = db.cursor()
+        try:
+            sql_query = """insert into User values('{u}', '{p}', '{t}','0')"""
+            cursor.execute(sql_query.format(u=username, p=password, t=type))
+            db.commit()
+        except mysql.connector.Error as err:
+                print("Something went wrong: ", err)
         return redirect(url_for('notApprovedUser'))
     else:
         return render_template('sign-up.html')
@@ -112,7 +123,7 @@ def handle_signin():
         
         username = request.form.get('username')    
         password = request.form.get('pass')     ### pass is the name! of the input field
-
+        
         # the below are written using the database
 
         cursor = db.cursor()
@@ -137,6 +148,17 @@ def handle_signin():
 @app.route("/not-approved-user")
 def notApprovedUser():
     return render_template('not-approved-user.html')
+
+@app.route('/admin')
+def admin():
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM User where valid=0 and type='librarian';")
+    notValidUsers = cursor.fetchall()
+    out = 'Not valid librarians (username, password) <br>'
+    for tup in notValidUsers:
+        out = out + tup[0] + ' ' + tup[1] + ' ' + tup[2] + '<br>'
+    return out 
+    #return render_template('admin.html')
 
 @app.route("/student")
 def student():
