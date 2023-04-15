@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accept Users</title>
+    <style>
+        label[for=accept]{
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1> Not valid Users </h1>
+    <form method="post">
+        <ul id="notValidUsers">
+            <!-- Here will be positioned the notValidUsers with accept inputs-->
+        </ul>
+        <input type="submit" value="Accept selected users">
+        </form>
+</body>
+<script>
+    listRoot = document.getElementById('notValidUsers')
+    fetch('/librarian/{{lib_username}}/notValidUsers')
+        .then(response => response.json())
+        .then(notValidUsers => {
+            console.log(notValidUsers); 
+            const myList = notValidUsers.notValidUsers.map(item => item);
+            console.log(myList); 
+            for (let user of myList){
+            let option = document.createElement("li");
+            option.value = user;
+            option.textContent = user[0]  + ' ' + user[1] + ' School: ' + user[2];
+            
+            let labelAccept = document.createElement('label');
+            labelAccept.setAttribute('for', 'accept')
+            labelAccept.textContent = 'accept';
+
+            let accept = document.createElement("input");
+            accept.setAttribute('type','radio');
+            accept.setAttribute('name', user[0]);
+            accept.setAttribute('value','accept');
+            
+            option.appendChild(accept);
+            option.appendChild(labelAccept);
+            
+            listRoot.appendChild(option);
+        }
+        });
+</script>
+</html>

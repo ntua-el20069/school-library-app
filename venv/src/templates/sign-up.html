@@ -89,18 +89,12 @@
                 return false;
             }   
         
-            fetch('/schools-list')
-                .then(response => response.json())
-                .then(schools => {
-                console.log(schools); 
-            });
-
-        
         console.log(schoolSelect);
 
         fetch('/schools-list')
         .then(response => response.json())
         .then(schools => {
+            console.log(schools); 
             const myList = schools.schools.map(item => item);
             console.log(myList); 
             for (let school of myList){

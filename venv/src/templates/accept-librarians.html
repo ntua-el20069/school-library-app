@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>accept librarians</title>
+    <style>
+        label[for=accept]{
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1> Not valid Librarians </h1>
+    <form method="post">
+        <ul id="notValidLibrarians">
+            <!-- Here will be positioned the notValidLibrarians with accept inputs-->
+        </ul>
+        <input type="submit" value="Accept selected librarians">
+        </form>
+</body>
+<script>
+    notValidLibs = document.getElementById('notValidLibrarians')
+    fetch('/notValidLibrarians')
+        .then(response => response.json())
+        .then(notValidLibrarians => {
+            console.log(notValidLibrarians); 
+            const myList = notValidLibrarians.notValidLibrarians.map(item => item);
+            console.log(myList); 
+            for (let lib of myList){
+            let option = document.createElement("li");
+            option.value = lib;
+            option.textContent = lib[0]  + ' ' + lib[2] + ' School: ' + lib[5];
+            
+            let labelAccept = document.createElement('label');
+            labelAccept.setAttribute('for', 'accept')
+            labelAccept.textContent = 'accept';
+
+            let accept = document.createElement("input");
+            accept.setAttribute('type','radio');
+            accept.setAttribute('name', lib[0]);
+            accept.setAttribute('value','accept');
+            
+            option.appendChild(accept);
+            option.appendChild(labelAccept);
+            
+            notValidLibs.appendChild(option);
+        }
+        });
+</script>
+</html>
