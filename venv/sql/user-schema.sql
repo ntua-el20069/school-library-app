@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS School_Library;
 create table User 
 (username varchar(20) not null,
 password varchar(20) not null,
-type varchar(20) not null,
+type varchar(20) not null check(type in ('student','teacher','librarian', 'admin')),
 valid boolean not null,
 primary key(username)
 );

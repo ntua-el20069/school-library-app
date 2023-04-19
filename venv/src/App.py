@@ -116,7 +116,8 @@ def insert_user():
             attr = user.split(',')
             username, password = attr
             out = out + 'Username:  ' + username + ' &emsp;  Password:  ' + password + '<br>'
-            valid = 0
+            ## accepts users with a probability of 0.5
+            valid = 0 if random.randint(1,100)>50 else 1
             type = ''
             if count%10 == 0: type = 'teacher'
             elif count%19==0: type = 'librarian'
@@ -302,7 +303,7 @@ def accept_librarians():
                 sql_query = "update User set valid=1 where username='{}'".format(lib[0])
                 cursor.execute(sql_query)
                 db.commit()
-            
+            out += '<br> <a href="/admin">Admin page</a>'
         return out
     else:
         return render_template('accept-librarians.html')
