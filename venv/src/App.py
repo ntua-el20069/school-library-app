@@ -159,11 +159,12 @@ def handle_signin():
         else: 
             valid = user[0][3]
             if valid: 
-                if user[0][2]=='librarian':
+                type = user[0][2]
+                if type=='librarian':
                     return redirect('/librarian/{}'.format(username))
                 else:
-                    #return render_template('/simple-user/{}'.format(username))
-                    return 'Succesfull login!  <br><br> valid user &emsp;' + username
+                    return redirect('/simple-user/{}/{}'.format(type,username))
+                    #return 'Succesfull login!  <br><br> valid user &emsp;' + username
             else: return redirect(url_for('notApprovedUser'))
         
         ##### the below handles post request if you do not use a database
@@ -204,10 +205,10 @@ def accept_libs_route():
 def admin():
     return render_template('admin.html')
 
-@app.route("/simple-user/<username>")
-def simple_user(username):
+@app.route("/simple-user/<type>/<username>")
+def simple_user(type, username):
     if not is_internal_request(): abort(401)
-    return render_template('simple-user.html', username=username)
+    return render_template('simple-user.html', type=type, username=username)
 
 @app.route("/librarian/<username>")
 def librarian(username):
@@ -237,7 +238,10 @@ def notValidUsers(lib_username):
         cursor.execute(q)
         notValidUsers = cursor.fetchall()
         return jsonify(notValidUsers=notValidUsers)
-        
+
+@app.route('/insert-school', methods=['GET', 'POST'])
+def insert_school_route():
+    return insert_school(db)
 
 if __name__ == '__main__':
     app.run(debug=True)

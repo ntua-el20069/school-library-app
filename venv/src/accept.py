@@ -46,3 +46,28 @@ def accept_users(db, lib_username):
     else:
         return render_template('accept-users.html', lib_username=lib_username)
     
+def insert_school(db):
+    if not is_internal_request(): abort(401)
+    if request.method == 'POST':
+        address = request.form.get('address')
+        city = request.form.get('city')
+        name = request.form.get('schoolName')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        principal = request.form.get('principal')
+        library_admin = request.form.get('libAdmin')
+        cursor = db.cursor()
+        try:
+            sql_query = """insert into School_Library values('{}','{}','{}','{}','{}','{}','{}');""".format(address, name, city, phone, email, principal, library_admin)
+            cursor.execute(sql_query)
+            db.commit()
+            out = 'School with attributes <br>'
+            out = out + 'address={}, name={}, city={}, phone={}, email={}, principal={}, library_admin={}'.format(address, name, city, phone, email, principal, library_admin) + '<br>'
+            out = out + 'was successfully inserted into DataBase <br>'
+            return out 
+        except mysql.connector.Error as err:
+            print("Something went wrong: ", err)
+            return "Error: maybe duplicate entry for school <br>"
+
+    else:
+        return render_template('insert-school.html')

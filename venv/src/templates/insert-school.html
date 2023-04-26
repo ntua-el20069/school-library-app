@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title> School Insertion </title>
+        <style>
+            body{
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            
+            form {
+                background-color: #cfd3ce;
+                padding: 2em;
+            }
+
+            label {
+                font-size: 0.8em;
+            }
+            input[type=text], input[type=email]{
+                width: 100%;
+                padding: 1em;
+                border: 1px solid #bbbbbb;
+                border-radius: 5px;
+                margin: 1em;
+                box-sizing: border-box;
+           }
+
+
+           input[type=submit]{
+                background-color: #34626C;
+                font-size:  1.2em;
+                color: white;
+           }
+
+        </style>
+    </head>
+
+    <body>
+        <form method='post' onsubmit="return(validate());">
+            <fieldset>
+                <legend> Insert School </legend>
+                
+                <label for="schoolName"> School name</label><br>
+                <input type="text" id="schoolName" name="schoolName" required><br>
+                
+                <label for="city"> City</label><br>
+                <input type="text" id="city" name="city" required><br>
+
+                <label for="address"> Address</label><br>
+                <input type="text" id="address" name="address" required><br>
+                
+                <label for="phone"> Phone</label><br>
+                <input type="text" id="phone" name="phone" required><br>
+
+                <label for="email"> Email</label><br>
+                <input type="email" id="email" name="email" required><br>
+
+                <label for="principal"> Principal</label><br>
+                <input type="text" id="principal" name="principal" required><br>
+
+                <label for="libAdmin"> Library Admin</label><br>
+                <input type="text" id="libAdmin" name="libAdmin" required><br>
+                
+                <input type="submit" value="Submission">
+            </fieldset>
+        </form>
+
+    </body>
+
+        <script>
+
+        
+            function validate(){
+    
+                return true;
+            }   
+        
+     
+        </script>
+    
+
+</html>
