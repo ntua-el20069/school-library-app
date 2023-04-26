@@ -3,6 +3,9 @@ from flask_httpauth import HTTPBasicAuth
 import mysql.connector 
 import random
 from datetime import timedelta
+from .helpRoutes import *   # this is used to import all functions from 'helpRoutes.py' 
+from .accept import *
+
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -32,13 +35,6 @@ def verify_password(username, password):
 def private_page():
     # Your private route code here
     return jsonify({"message": "This is a private page"})
-
-# A global variable to store the secret token
-#secret_token = None
-
-# Define a function to check if the request is from another route
-def is_internal_request():
-    return request.referrer and request.referrer.startswith(request.host_url)
 
 ## in order to use the db "users_and_libraries" 
 ##  Apache and MySQL should be running...
@@ -72,100 +68,27 @@ def home():
 # This is a simple routing example 
 # If you want to make an html page, you should put it into directory 'templates'
 @app.route("/sample")
-def sample():
-    return render_template('sample-page.html')
+def sample_route():
+    return sample()
+
 
 # create schema ...
 @app.route("/create")
 @auth.login_required
-def create():
-    fd = open('venv\\sql\\user-schema.sql', 'r')
-    sqlFile = fd.read()
-    fd.close()
-
-    sqlCommands = sqlFile.split(';')
-
-    for command in sqlCommands:
-        # This will skip and report errors
-    # For example, if the tables do not yet exist, this will skip over
-    # the DROP TABLE commands
-        try:
-            cursor = db.cursor()
-            cursor.execute(command)
-        except mysql.connector.Error as err:
-            print("Something went wrong: ", err)
-            
-        
-    return 'creates a db and a table inside'
+def create_route():
+    return create(db)
 
 # insert data into User 
 @app.route('/insert-user')
 @auth.login_required
-def insert_user():
-    fd = open('venv\csv\insert-user.csv', 'r', encoding="utf-8")
-    csvFile = fd.read()
-    fd.close()
-    cursor = db.cursor()
-    csvTuples = csvFile.split('\n')
-    out = ''
-    #return csvTuples
-    count = 0
-    for user in csvTuples:
-        count += 1
-        if user:
-            attr = user.split(',')
-            username, password = attr
-            out = out + 'Username:  ' + username + ' &emsp;  Password:  ' + password + '<br>'
-            ## accepts users with a probability of 0.5
-            valid = 0 if random.randint(1,100)>50 else 1
-            type = ''
-            if count%10 == 0: type = 'teacher'
-            elif count%19==0: type = 'librarian'
-            else: type = 'student'
-
-            try:
-                sql_query = """insert into User values('{u}','{p}','{t}',{v});"""
-                cursor.execute(sql_query.format(u=username,p=password,t=type,v=valid))
-                db.commit()
-            except mysql.connector.Error as err:
-                print("Something went wrong: ", err)
-        else:
-            break
-    return out
+def insert_user_route():
+    return insert_user(db)
 
 # insert data into School_Library 
 @app.route('/insert-lib')
 @auth.login_required
-def insert_lib():
-    fd = open('venv\csv\insert-lib.csv', 'r', encoding="utf-8")
-    csvFile = fd.read()
-    fd.close()
-    cursor = db.cursor()
-    csvTuples = csvFile.split('\n')
-    out = ''
-    #return csvTuples
-    count = 0
-    for lib in csvTuples:
-        count += 1
-        name = str(random.randint(1,50)) + ' '
-        if count%3 == 0: name += 'Primary School'
-        elif count%3==1: name += 'Junior High School'
-        else: name += 'High School'
-        if lib:
-            attr = lib.split(',')
-            address, city, phone, email, principal, library_admin = attr
-            out = out + 'address={}, name={}, city={}, phone={}, email={}, principal={}, library_admin={}'.format(address, name, city, phone, email, principal, library_admin) + '<br>'
-        
-            try:
-                sql_query = """insert into School_Library values('{}','{}','{}','{}','{}','{}','{}');""".format(address, name, city, phone, email, principal, library_admin)
-                cursor.execute(sql_query)
-                db.commit()
-            except mysql.connector.Error as err:
-                print("Something went wrong: ", err)
-        else:
-            break
-            
-    return out
+def insert_lib_route():
+    return insert_lib(db)
 
 # inserts all existing in the DB Users to the table Signup_Approval
 # correlated by a random school
@@ -173,21 +96,8 @@ def insert_lib():
 # so that there will be no duplicate entry errors
 @app.route('/insert-signup-approval')
 @auth.login_required
-def insert_signup_approval():
-    cursor = db.cursor()
-    cursor.execute("SELECT username FROM User")
-    users = cursor.fetchall()
-    cursor.execute("SELECT address FROM School_Library")
-    libs = cursor.fetchall()
-    out = ''
-    for tup in users:
-        address =  random.choice(libs)[0]
-        username = tup[0]
-        out = out + username + ' ' + address + '<br>'
-        sql_query = "insert into Signup_Approval values('{}','{}');".format(username, address)
-        cursor.execute(sql_query)
-        db.commit()
-    return out
+def insert_signup_approval_route():
+    return insert_signup_approval(db)
 
 @app.route("/signup", methods=['GET', 'POST'])
 def signup_form_redirect():
@@ -227,11 +137,8 @@ def signup_form_redirect():
 # returns json object with schools from the database 
 # in order to be used in JS - Sign-up page
 @app.route('/schools-list')
-def get_schools_list():
-    cursor = db.cursor()
-    cursor.execute("SELECT name, address FROM School_Library")
-    schools = cursor.fetchall()
-    return jsonify(schools=schools)
+def schools_list_route():
+    return get_schools_list(db)
 
 @app.route("/signin", methods=['GET', 'POST'])
 def handle_signin():
@@ -289,25 +196,8 @@ def notValidLibrarians():
 
 @app.route('/accept-librarians', methods=['GET', 'POST'])
 @auth.login_required
-def accept_librarians():
-    if request.method == 'POST':
-        cursor = db.cursor()
-        cursor.execute("select username from User where type='librarian' and valid=0")
-        notValidLibrarians = cursor.fetchall()
-        out = ''
-        for lib in notValidLibrarians:
-            mode = request.form.get(lib[0])
-            if mode=='accept': 
-                out += lib[0] + ' accepted <br>' 
-                ## it is not an efficient way ...
-                sql_query = "update User set valid=1 where username='{}'".format(lib[0])
-                cursor.execute(sql_query)
-                db.commit()
-            out += '<br> <a href="/admin">Admin page</a>'
-        return out
-    else:
-        return render_template('accept-librarians.html')
-    
+def accept_libs_route():
+    return accept_librarians(db)
 
 @app.route('/admin')
 @auth.login_required
@@ -332,25 +222,8 @@ def librarian(username):
         return 'An error occured!'
 
 @app.route("/librarian/<lib_username>/accept-users", methods=['GET', 'POST'])
-def accept_users(lib_username):
-    if not is_internal_request(): abort(401)
-    if request.method == 'POST':
-        cursor = db.cursor()
-        cursor.execute("select username from User where type='student' or type='teacher' and valid=0")
-        notValidUsers = cursor.fetchall()
-        out = ''
-        for user in notValidUsers:
-            mode = request.form.get(user[0])
-            if mode=='accept': 
-                out += user[0] + ' accepted <br>' 
-                ## it is not an efficient way ...
-                sql_query = "update User set valid=1 where username='{}'".format(user[0])
-                cursor.execute(sql_query)
-                db.commit()
-        out += '<br> <a href="/librarian/{}">librarian  page</a>'.format(lib_username)
-        return out
-    else:
-        return render_template('accept-users.html', lib_username=lib_username)
+def accept_users_route(lib_username):
+    return accept_users(db, lib_username)
 
 @app.route('/librarian/<lib_username>/notValidUsers')
 def notValidUsers(lib_username):
