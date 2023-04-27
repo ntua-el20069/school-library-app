@@ -210,6 +210,10 @@ def simple_user(type, username):
     if not is_internal_request(): abort(401)
     return render_template('simple-user.html', type=type, username=username)
 
+@app.route("/simple-user/<type>/<username>/card")
+def simple_user_card(type, username):
+    if not is_internal_request(): abort(401)
+    return 'Card of the valid member of School Library Network <br> {} ({}) '.format(username, type)
 @app.route("/librarian/<username>")
 def librarian(username):
     if not is_internal_request(): abort(401)
