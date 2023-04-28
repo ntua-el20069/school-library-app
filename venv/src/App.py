@@ -10,13 +10,16 @@ from .accept import *
 app = Flask(__name__)
 auth = HTTPBasicAuth()
 
+db_name = "users_and_libraries" 
+
 db = mysql.connector.connect(
     host="localhost",
     user="root",
     password="",                       # that's because I do not use a password... you may change it for your DBMS
-    database="users_and_libraries"   # a database I created to play with...
+    database=db_name   # a database I created to play with...
 )
 
+    
 
 def get_admin():
     cursor = db.cursor()
@@ -262,6 +265,15 @@ def insert_school_route():
 def change_password_route(username):
     return change_password(db, username)
 
+@app.route('/backup', methods = ['GET', 'POST'])
+@auth.login_required
+def backup_route():
+    return backup(db, db_name)
+
+@app.route('/restore', methods = ['GET', 'POST'])
+@auth.login_required
+def restore_route():
+    return restore(db, db_name)
 
 if __name__ == '__main__':
     app.run(debug=True)

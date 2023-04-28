@@ -9,6 +9,7 @@ from .helpRoutes import is_internal_request
 ## insert school
 ## disable users (from librarian) due to library policy
 ## change password
+## backup and restore
 
 def accept_librarians(db):
     if request.method == 'POST':
@@ -110,3 +111,65 @@ def change_password(db, username):
             return "Error: maybe update constraint <br>"
     else:
         return render_template('change-password.html', username=username)
+    
+def backup(db, db_name):
+    if request.method == 'POST':
+        confirm = request.form.get('backup')
+        if confirm=='no': return 'backup creation was denied'
+        out = ''
+        cursor = db.cursor()
+        cursor.execute('show tables;')
+        table_names = []
+        for record in cursor.fetchall():
+            table_names.append(record[0])
+        backup_dbname = db_name + '_backup'
+        try:
+            cursor.execute(f'DROP SCHEMA IF EXISTS {backup_dbname}')
+            cursor.execute(f'CREATE DATABASE {backup_dbname}')
+            out += 'backup was successfully created <br>'
+        except mysql.connector.Error as err:
+            print("Something went wrong: ", err)
+            return 'an error occured so that backup was not created <br>'
+        
+        cursor.execute(f'USE {backup_dbname}')
+  
+        for table_name in table_names:
+            cursor.execute(
+                f'CREATE TABLE {table_name} SELECT * FROM {db_name}.{table_name}')
+        cursor.execute(f'USE {db_name}')
+        out += 'the original database is used now'
+        return out
+    else:
+        return render_template('backup.html')
+
+def restore(db, db_name):
+    if request.method == 'POST':
+        confirm = request.form.get('restore')
+        if confirm=='no': return 'restore action was denied'
+        out = ''
+        cursor = db.cursor()
+        backup_dbname = db_name + '_backup'
+        try:    
+            cursor.execute(f'USE {backup_dbname}')
+        except mysql.connector.Error as err:
+            print("Something went wrong: ", err)
+            return 'there is no backup database'
+        cursor.execute('show tables;')
+        table_names = []
+        for record in cursor.fetchall():
+            table_names.append(record[0])
+        try:
+            cursor.execute(f'DROP SCHEMA IF EXISTS {db_name}')
+            cursor.execute(f'CREATE DATABASE {db_name}')
+            cursor.execute(f'USE {db_name}')
+            for table_name in table_names:
+                cursor.execute(
+                f'CREATE TABLE {table_name} SELECT * FROM {backup_dbname}.{table_name}')
+            cursor.execute(f'USE {db_name}')
+            out += 'the original database is used now'
+            return out
+        except mysql.connector.Error as err:
+            print("Something went wrong: ", err)
+            return 'an error occured so the restore process cannot proceed <br>'
+    else:
+        return render_template('restore.html')
