@@ -8,6 +8,7 @@ from .helpRoutes import is_internal_request
 ## Here are some functions for Routes that accept librarians (from admin), users (from librarian)
 ## insert school
 ## disable users (from librarian) due to library policy
+## change password
 
 def accept_librarians(db):
     if request.method == 'POST':
@@ -94,3 +95,18 @@ def disable_users(db, lib_username):
     else:
         return render_template('disable-users.html', lib_username=lib_username)
     
+def change_password(db, username):
+    if not is_internal_request(): abort(401)
+    if request.method == 'POST':
+        try:    
+            new_password = request.form.get('pass1')
+            cursor = db.cursor()
+            sql = "update User set password='{}' where username='{}'".format(new_password, username)
+            cursor.execute(sql)
+            db.commit()
+            return 'Password changed succesfully! <br> <a href="/signin"> Sign in page </a> <br>'
+        except mysql.connector.Error as err:
+            print("Something went wrong: ", err)
+            return "Error: maybe update constraint <br>"
+    else:
+        return render_template('change-password.html', username=username)

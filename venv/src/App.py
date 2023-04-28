@@ -28,8 +28,7 @@ def get_admin():
 # Set the username and password for authentication
 # Use @auth.login_required to make a route private...
 users = {
-    "dev": "chatgpt",
-    get_admin()[0]: get_admin()[1]
+    "dev": "chatgpt"
 }
 
 
@@ -37,7 +36,7 @@ users = {
 # Verify the username and password for each request
 @auth.verify_password
 def verify_password(username, password):
-    if username in users and password == users[username]:
+    if username in users and password == users[username] or username==get_admin()[0] and password==get_admin()[1]:
         return username
 
 # Add the authentication decorator to the route
@@ -174,7 +173,7 @@ def handle_signin():
                 if type=='librarian':
                     return redirect('/librarian/{}'.format(username))
                 elif type == 'admin':
-                    return redirect('/admin')
+                    return redirect('/{}/admin'.format(username))
                 else:
                     return redirect('/simple-user/{}/{}'.format(type,username))
                     #return 'Succesfull login!  <br><br> valid user &emsp;' + username
@@ -213,10 +212,10 @@ def notValidLibrarians():
 def accept_libs_route():
     return accept_librarians(db)
 
-@app.route('/admin')
+@app.route('/<username>/admin')
 @auth.login_required
-def admin():
-    return render_template('admin.html')
+def admin(username):
+    return render_template('admin.html', username=username)
 
 @app.route("/simple-user/<type>/<username>")
 def simple_user(type, username):
@@ -258,6 +257,11 @@ def ValidUsers_route(lib_username):
 @app.route('/insert-school', methods=['GET', 'POST'])
 def insert_school_route():
     return insert_school(db)
+
+@app.route('/<username>/change-password', methods=['GET', 'POST'])
+def change_password_route(username):
+    return change_password(db, username)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
