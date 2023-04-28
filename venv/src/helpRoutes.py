@@ -54,8 +54,9 @@ def insert_user(db):
             ## accepts users with a probability of 0.5
             valid = 0 if random.randint(1,100)>50 else 1
             type = ''
-            if count%10 == 0: type = 'teacher'
-            elif count%19==0: type = 'librarian'
+            if count==5: type='admin'
+            elif count%10 == 0: type = 'teacher'
+            elif count%12==0: type = 'librarian'
             else: type = 'student'
 
             try:
@@ -120,3 +121,27 @@ def get_schools_list(db):
     cursor.execute("SELECT name, address FROM School_Library")
     schools = cursor.fetchall()
     return jsonify(schools=schools)
+
+def notValidUsers(db, lib_username):
+    if not is_internal_request(): abort(401)
+    q = "select address from Signup_Approval where username='{}'".format(lib_username)
+    cursor = db.cursor()
+    cursor.execute(q)
+    address = cursor.fetchall()[0][0]
+    if address: 
+        q = "select User.username, type, address from User, Signup_Approval where User.username=Signup_Approval.username and address='{}' and valid=0 ".format(address)
+        cursor.execute(q)
+        notValidUsers = cursor.fetchall()
+        return jsonify(notValidUsers=notValidUsers)
+    
+def ValidUsers(db, lib_username, valid_bool): # call it with 1 for valid users and with 0 for not valid users
+    #if not is_internal_request(): abort(401)
+    q = "select address from Signup_Approval where username='{}'".format(lib_username)
+    cursor = db.cursor()
+    cursor.execute(q)
+    address = cursor.fetchall()[0][0]
+    if address: 
+        q = "select User.username, type, address from User, Signup_Approval where User.username=Signup_Approval.username and address='{}' and valid={} and (type='teacher' or type='student') ;".format(address, valid_bool)
+        cursor.execute(q)
+        Users = cursor.fetchall()
+        return jsonify(Users=Users)

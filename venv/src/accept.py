@@ -6,6 +6,8 @@ from .helpRoutes import is_internal_request
 
 
 ## Here are some functions for Routes that accept librarians (from admin), users (from librarian)
+## insert school
+## disable users (from librarian) due to library policy
 
 def accept_librarians(db):
     if request.method == 'POST':
@@ -35,12 +37,12 @@ def accept_users(db, lib_username):
         out = ''
         for user in notValidUsers:
             mode = request.form.get(user[0])
-            if mode=='accept': 
-                out += user[0] + ' accepted <br>' 
+            if mode=='accept':  
                 ## it is not an efficient way ...
                 sql_query = "update User set valid=1 where username='{}'".format(user[0])
                 cursor.execute(sql_query)
                 db.commit()
+                out += user[0] + ' accepted <br>'
         out += '<br> <a href="/librarian/{}">librarian  page</a>'.format(lib_username)
         return out
     else:
@@ -71,3 +73,24 @@ def insert_school(db):
 
     else:
         return render_template('insert-school.html')
+    
+def disable_users(db, lib_username):
+    if not is_internal_request(): abort(401)
+    if request.method == 'POST':
+        cursor = db.cursor()
+        cursor.execute("select username from User where type='student' or type='teacher' and valid=1")
+        notValidUsers = cursor.fetchall()
+        out = ''
+        for user in notValidUsers:
+            mode = request.form.get(user[0])
+            if mode=='disable': 
+                ## it is not an efficient way ...
+                sql_query = "update User set valid=0 where username='{}'".format(user[0])
+                cursor.execute(sql_query)
+                db.commit()
+                out += user[0] + ' disabled <br>'
+        out += '<br> <a href="/librarian/{}">librarian  page</a>'.format(lib_username)
+        return out
+    else:
+        return render_template('disable-users.html', lib_username=lib_username)
+    

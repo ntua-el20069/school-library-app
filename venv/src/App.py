@@ -17,11 +17,22 @@ db = mysql.connector.connect(
     database="users_and_libraries"   # a database I created to play with...
 )
 
+
+def get_admin():
+    cursor = db.cursor()
+    sql = "select username, password from User where type='admin';"
+    cursor.execute(sql)
+    p = cursor.fetchall()[0]
+    #print(p)
+    return p
 # Set the username and password for authentication
 # Use @auth.login_required to make a route private...
 users = {
-    "dev": "chatgpt"
+    "dev": "chatgpt",
+    get_admin()[0]: get_admin()[1]
 }
+
+
 
 # Verify the username and password for each request
 @auth.verify_password
@@ -162,6 +173,8 @@ def handle_signin():
                 type = user[0][2]
                 if type=='librarian':
                     return redirect('/librarian/{}'.format(username))
+                elif type == 'admin':
+                    return redirect('/admin')
                 else:
                     return redirect('/simple-user/{}/{}'.format(type,username))
                     #return 'Succesfull login!  <br><br> valid user &emsp;' + username
@@ -230,18 +243,17 @@ def librarian(username):
 def accept_users_route(lib_username):
     return accept_users(db, lib_username)
 
+@app.route("/librarian/<lib_username>/disable-users", methods=['GET', 'POST'])
+def disable_users_route(lib_username):
+    return disable_users(db, lib_username)
+
 @app.route('/librarian/<lib_username>/notValidUsers')
-def notValidUsers(lib_username):
-    if not is_internal_request(): abort(401)
-    q = "select address from Signup_Approval where username='{}'".format(lib_username)
-    cursor = db.cursor()
-    cursor.execute(q)
-    address = cursor.fetchall()[0][0]
-    if address: 
-        q = "select User.username, type, address from User, Signup_Approval where User.username=Signup_Approval.username and address='{}' and valid=0 ".format(address)
-        cursor.execute(q)
-        notValidUsers = cursor.fetchall()
-        return jsonify(notValidUsers=notValidUsers)
+def notValidUsers_route(lib_username):
+    return ValidUsers(db, lib_username, 0)      # valid=0
+
+@app.route('/librarian/<lib_username>/ValidUsers')
+def ValidUsers_route(lib_username):
+    return ValidUsers(db, lib_username, 1)     # valid=1
 
 @app.route('/insert-school', methods=['GET', 'POST'])
 def insert_school_route():

@@ -4,25 +4,25 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accept Users</title>
+    <title>Disable Users</title>
     <style>
-        label[for=accept]{
-            color: green;
+        label[for=disable]{
+            color: red;
         }
     </style>
 </head>
 <body>
-    <h1> Not valid Users </h1>
+    <h1> Valid Users </h1>
     <form method="post">
-        <ul id="notValidUsers">
+        <ul id="ValidUsers">
             <!-- Here will be positioned the notValidUsers with accept inputs-->
         </ul>
-        <input type="submit" value="Accept selected users">
+        <input type="submit" value="Disable selected users">
         </form>
 </body>
 <script>
-    listRoot = document.getElementById('notValidUsers')
-    fetch('/librarian/{{lib_username}}/notValidUsers')
+    listRoot = document.getElementById('ValidUsers')
+    fetch('/librarian/{{lib_username}}/ValidUsers')
         .then(response => response.json())
         .then(Users => {
             console.log(Users); 
@@ -33,17 +33,17 @@
             option.value = user;
             option.textContent = user[0]  + ' ' + user[1] + ' School: ' + user[2];
             
-            let labelAccept = document.createElement('label');
-            labelAccept.setAttribute('for', 'accept')
-            labelAccept.textContent = 'accept';
+            let labelDisable = document.createElement('label');
+            labelDisable.setAttribute('for', 'disable')
+            labelDisable.textContent = 'disable';
 
-            let accept = document.createElement("input");
-            accept.setAttribute('type','radio');
-            accept.setAttribute('name', user[0]);
-            accept.setAttribute('value','accept');
+            let disable= document.createElement("input");
+            disable.setAttribute('type','radio');
+            disable.setAttribute('name', user[0]);
+            disable.setAttribute('value','disable');
             
-            option.appendChild(accept);
-            option.appendChild(labelAccept);
+            option.appendChild(disable);
+            option.appendChild(labelDisable);
             
             listRoot.appendChild(option);
         }
