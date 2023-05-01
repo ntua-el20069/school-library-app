@@ -130,6 +130,44 @@ def get_schools_list(db):
     schools = cursor.fetchall()
     return jsonify(schools=schools)
 
+def books_in_system(db):
+    out = 'Books in System <br><br><br>'
+    cursor = db.cursor()
+    sql = "select title, ISBN from Book;"
+    cursor.execute(sql)
+    books = cursor.fetchall()
+    for book in books:
+        if book: out += "Title: {}, ISBN: {} <br>".format(book[0], book[1])
+    return out
+
+def books_in_this_school(db, address, username):
+    out = 'Books in this School <br><br><br>'
+    cursor = db.cursor()
+    sql = "select title, B.ISBN from Book B, Available A where B.ISBN=A.ISBN and A.address='{}';".format(address)
+    cursor.execute(sql)
+    books = cursor.fetchall()
+    for book in books:
+        if book: out += "Title: {}, ISBN: {}  <a href='/librarian/{}/{}/update-book'>Update book info</a><br>".format(book[0], book[1], username, book[1])
+    return out
+
+def add_existing_book(db, address):
+    if request.method == 'POST':
+        out = ''
+        ISBN = request.form.get('ISBN')
+        copies = request.form.get('copies')
+        cursor = db.cursor()
+        try:    
+            sql = "insert into Available values('{}','{}',{})".format(ISBN, address, copies)
+            cursor.execute(sql)
+            db.commit()
+            out += 'ISBN: {}, address of school: {}, copies={} <br> inserted successfully <br>'.format(ISBN, address, copies)
+        except mysql.connector.Error as err:
+            print("Something went wrong: ", err)
+            out += 'There is an error- maybe duplicate insert into Available <br>'
+        return out
+    else:
+        return render_template('add-existing-book.html')
+
 def notValidUsers(db, lib_username):
     if not is_internal_request(): abort(401)
     q = "select address from Signup_Approval where username='{}'".format(lib_username)

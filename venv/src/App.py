@@ -314,6 +314,36 @@ def ValidUsers_route(lib_username):
 def insert_book_by_lib(username):
     return insert_book_by_librarian(db, username)
 
+@app.route('/librarian/<username>/add-existing-book', methods = ['GET', 'POST'])
+def add_existing_book_route(username):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    sql = "select address from Signup_Approval where username='{}'".format(username)
+    cursor.execute(sql)
+    address = cursor.fetchall()[0][0]
+    return add_existing_book(db, address)
+
+@app.route('/librarian/<username>/<ISBN>/update-book')
+def update_book_route(username, ISBN):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    sql = "select address from Signup_Approval where username='{}'".format(username)
+    cursor.execute(sql)
+    address = cursor.fetchall()[0][0]
+    return update_book(db, ISBN, address)
+
+@app.route('/books-in-system')
+def books_in_system_route():
+    return books_in_system(db)
+
+@app.route('/<username>/books-in-this-school')
+def books_in_this_school_route(username):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    sql = "select address from Signup_Approval where username='{}'".format(username)
+    cursor.execute(sql)
+    address = cursor.fetchall()[0][0]
+    return books_in_this_school(db, address, username)
 
 @app.route('/insert-school', methods=['GET', 'POST'])
 def insert_school_route():

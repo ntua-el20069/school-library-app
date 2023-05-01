@@ -223,3 +223,46 @@ def restore(db, db_name):
             return 'an error occured so the restore process cannot proceed <br>'
     else:
         return render_template('restore.html')
+
+def update_book(db, ISBN, address):
+    if request.method == 'POST':
+        return ''
+    else:
+        cursor = db.cursor()
+        sql = "select title, publisher, pages, image, language, summary from Book where ISBN='{}'".format(ISBN)
+        cursor.execute(sql)
+        title, publisher, pages, image, language, summary = cursor.fetchall()[0]
+        
+        ### find authors
+        sql = "select name from Author where ISBN='{}'".format(ISBN)
+        cursor.execute(sql)
+        authors = []
+        for author in cursor.fetchall():
+            authors.append(author[0])
+        authors = ", ".join(authors) # convert to string
+        
+        ### find keywords
+        sql = "select keyword from Keyword where ISBN='{}'".format(ISBN)
+        cursor.execute(sql)
+        keywords = []
+        for keyword in cursor.fetchall():
+            keywords.append(keyword[0])
+        print(keywords)
+        keywords = ", ".join(keywords) # convert to string
+        print(keywords)
+        
+        ### find topics
+        sql = "select topic from Topic where ISBN='{}'".format(ISBN)
+        cursor.execute(sql)
+        topics = []
+        for topic in cursor.fetchall():
+            topics.append(topic[0])
+        topics = ", ".join(topics) # convert to string
+
+        ### find copies
+        sql = "select books_number from Available where ISBN='{}' and address='{}'".format(ISBN, address)
+        cursor.execute(sql)
+        copies = cursor.fetchall()[0][0]
+
+        return render_template('update-book.html', ISBN=ISBN, title=title, publisher=publisher, pages=pages, image=image, language=language, summary=summary, authors=authors, keywords=keywords, topics=topics, copies=copies)
+        

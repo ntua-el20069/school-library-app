@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title> Update book info </title>
+        <style>
+            body{
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            
+            form {
+                background-color: #cfd3ce;
+                padding: 2em;
+            }
+
+            label {
+                font-size: 0.8em;
+            }
+            input[type=text], input[type=email], input[type=number]{
+                width: 100%;
+                padding: 1em;
+                border: 1px solid #bbbbbb;
+                border-radius: 5px;
+                margin: 1em;
+                box-sizing: border-box;
+           }
+           
+           textarea {
+                width: 80%;
+                height: 10em;
+                padding: 1em;
+                border: 1px solid #bbbbbb;
+                border-radius: 5px;
+                margin: 1em;
+                box-sizing: border-box;
+           }
+
+           input[type=submit]{
+                background-color: #34626C;
+                font-size:  1.2em;
+                color: white;
+           }
+
+        </style>
+    </head>
+
+    <body>
+        <form method='post' onsubmit="return(validate());">
+            <fieldset>
+                <legend> Update book info  </legend>
+                
+                <label for="ISBN"> ISBN</label><br>
+                <input type="text" id="ISBN" name="ISBN" value={{ISBN}} required readonly><br>
+                
+                <label for="title"> title: {{title}}</label><br>
+                <input type="text" id="title" name="title"  ><br>
+
+                <label for="publisher"> publisher: {{publisher}}</label><br>
+                <input type="text" id="publisher" name="publisher"  ><br>
+                
+                <label for="pages"> pages</label><br>
+                <input type="number" id="pages" name="pages" value={{pages}} required><br>
+
+                <label for="image"> image url: {{image}}</label><br>
+                <input type="text" id="image" name="image"  ><br>
+
+                <label for="language"> language: {{language}}</label><br>
+                <input type="text" id="language" name="language"  ><br>
+
+                <label for="summary"> summary: {{summary}}</label><br>
+                <textarea type="text" id="summary" name="summary"  ></textarea><br>
+
+                <label for="authors"> Authors: {{authors}}</label><br>
+                <input type="text" id="authors" name="authors"   placeholder="Kazantzakis, Omiros, Karyotakis"><br>
+                
+                <label for="topics"> Topics:  {{topics}}</label><br>
+                <input type="text" id="topics" name="topics"   placeholder="Math, Poems"><br>
+
+                <label for="keywords"> Keywords: {{keywords}}</label><br>
+                <input type="text" id="keywords" name="keywords"   placeholder="differential equations, integrals"><br>
+
+                <label for="copies"> copies</label><br>
+                <input type="number" id="copies" name="copies" value={{copies}} required><br>
+                
+                <input type="submit" value="Submission">
+            </fieldset>
+        </form>
+
+    </body>
+
+        <script>
+            
+        
+            function validate(){
+                // here if an input is '' then we will fill it with the default.. {{...}}
+                let pages = Number(document.getElementById('pages').value);
+                console.log(document.getElementById('pages').value);
+                let copies = Number(document.getElementById('copies').value);
+                if (pages>0 && copies>=0)  return true;
+                alert("pages>0 and copies>=0");
+                return false;
+            }   
+        
+     
+        </script>
+    
+
+</html>
