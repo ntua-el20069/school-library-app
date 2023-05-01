@@ -166,7 +166,7 @@ def restore(db, db_name):
                 cursor.execute(
                 f'CREATE TABLE {table_name} SELECT * FROM {backup_dbname}.{table_name}')
             cursor.execute(f'USE {db_name}')
-            out += 'the original database is used now'
+            out += 'restore was done <br> the original database is used now'
             return out
         except mysql.connector.Error as err:
             print("Something went wrong: ", err)

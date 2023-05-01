@@ -10,7 +10,7 @@ from .accept import *
 app = Flask(__name__)
 auth = HTTPBasicAuth()
 
-db_name = "users_and_libraries" 
+db_name = "users_libraries_books" 
 
 db = mysql.connector.connect(
     host="localhost",
@@ -52,9 +52,15 @@ def private_page():
 ## in order to use the db "users_and_libraries" 
 ##  Apache and MySQL should be running...
 ## run the page '/create' which creates db and schema
+
 ## and then '/insert-user' which inserts data into table User
 ## and then '/insert-lib' which inserts data into table School-Library
 ## and then '/insert-signup-approval' which inserts data into table SignUp_Approval
+## and then '/insert-book' which inserts books in db and their characteristics
+## and then '/insert-available' which inserts books into several schools
+
+## All these can be done with '/insert'
+
 ## sign in operates according to the database (or not if you use the JS comments in "sign-in.html" 
 ## and the appropriate code in python)
 ## Attention!! when you run '/create' database drops and a new is created 
@@ -91,6 +97,12 @@ def sample_route():
 def create_route():
     return create(db)
 
+# insert all
+@app.route("/insert")
+@auth.login_required
+def insert_route():
+    return insert(db)
+
 # insert data into User 
 @app.route('/insert-user')
 @auth.login_required
@@ -102,6 +114,18 @@ def insert_user_route():
 @auth.login_required
 def insert_lib_route():
     return insert_lib(db)
+
+# insert data into Book
+@app.route('/insert-book')
+@auth.login_required
+def insert_book_route():
+    return insert_book(db)
+
+# inserts all the existing books in several schools ..
+@app.route('/insert-available')
+@auth.login_required
+def insert_available_route():
+    return insert_available(db)
 
 # inserts all existing in the DB Users to the table Signup_Approval
 # correlated by a random school
