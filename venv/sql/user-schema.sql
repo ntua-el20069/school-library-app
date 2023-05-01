@@ -51,7 +51,7 @@ create table Book
     pages int check (pages>0),
     image varchar(200),
     language varchar(20),
-    summary text,
+    summary varchar(1000),
     primary key (ISBN)
 );
 
@@ -59,7 +59,7 @@ create table Available
 (
     ISBN varchar(20) not null,
     address varchar(50) NOT NULL,
-    books_number int,
+    books_number int check(books_number>=0),
     primary key (ISBN, address),
     constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict,
     constraint foreign key (address) references School_Library(address) on update restrict on delete restrict

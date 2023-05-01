@@ -281,6 +281,11 @@ def notValidUsers_route(lib_username):
 def ValidUsers_route(lib_username):
     return ValidUsers(db, lib_username, 1)     # valid=1
 
+@app.route('/librarian/<username>/insert-book', methods = ['GET', 'POST'])
+def insert_book_by_lib(username):
+    return insert_book_by_librarian(db, username)
+
+
 @app.route('/insert-school', methods=['GET', 'POST'])
 def insert_school_route():
     return insert_school(db)

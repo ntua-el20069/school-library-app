@@ -25,7 +25,7 @@ def accept_librarians(db):
                 sql_query = "update User set valid=1 where username='{}'".format(lib[0])
                 cursor.execute(sql_query)
                 db.commit()
-            out += '<br> <a href="/admin">Admin page</a>'
+        #out += '<br> <a href="/admin">Admin page</a>'
         return out
     else:
         return render_template('accept-librarians.html')
@@ -75,7 +75,57 @@ def insert_school(db):
 
     else:
         return render_template('insert-school.html')
-    
+
+def insert_book_by_librarian(db, username):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    sql = '''select School_Library.address, name 
+            from Signup_Approval, School_Library
+            where School_Library.address = Signup_Approval.address and username="{}" '''.format(username)
+    cursor.execute(sql)
+    school = cursor.fetchall()[0]
+    print(school)
+    address , name = school
+    if request.method == 'POST':
+        ISBN = request.form.get('ISBN')
+        title = request.form.get('title')
+        publisher = request.form.get('publisher')
+        pages = request.form.get('pages')
+        image = request.form.get('image')
+        language = request.form.get('language')
+        summary = request.form.get('summary').replace('<br>',' ').replace('\n',' ')
+        authors = request.form.get('authors').split(',')
+        topics = request.form.get('topics').split(',')
+        keywords = request.form.get('keywords').split(',')
+        copies = request.form.get('copies')
+        out = ''
+        try:
+            sql = '''insert into Book values ("{}","{}","{}",{},"{}","{}","{}")'''.format(ISBN, title, publisher, pages, image, language, summary)
+            cursor.execute(sql)
+            for author in authors:
+                sql = "insert into Author values('{}','{}')".format(ISBN, author.strip())
+                cursor.execute(sql)
+            for topic in topics:
+                sql = "insert into Topic values('{}','{}')".format(ISBN, topic.strip())
+                cursor.execute(sql)
+            for keyword in keywords:
+                sql = "insert into Keyword values('{}','{}')".format(ISBN, keyword.strip())
+                cursor.execute(sql)
+            sql = '''insert into Available values("{}","{}", {})'''.format(ISBN, address, copies)
+            cursor.execute(sql)
+            db.commit()
+            out += "ISBN = {}, title = {}, publisher = {}, pages = {}, image = {}, language = {},<br> &emsp; summary = {} <br><br>".format(ISBN, title, publisher, pages, image, language, summary)
+            out += "ISBN : {}, Authors: {} <br>".format(ISBN, authors)
+            out += "ISBN : {}, Topics: {} <br>".format(ISBN, topics)
+            out += "ISBN : {}, Keywords: {} <br>".format(ISBN, keywords)
+            out += "ISBN : {}, Address of School: {}, copies: {}".format(ISBN, address, copies)
+            return out
+        except mysql.connector.Error as err:
+            print("Something went wrong: ", err)
+            return "Error: maybe duplicate entry for book <br>"
+    else:
+        return render_template('insert-book.html', address=address, name=name)
+
 def disable_users(db, lib_username):
     if not is_internal_request(): abort(401)
     if request.method == 'POST':
