@@ -143,6 +143,9 @@ def signup_form_redirect():
         password = request.form.get('pass1')     ### pass1 is the name! of the input field
         type = request.form.get('userType')
         school = request.form.get('school')
+        birth_date = request.form.get('birth_date')
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
         print(school)
         address = school.split(',')[1]
         print(address)
@@ -155,8 +158,8 @@ def signup_form_redirect():
         if schoolExists:
             # insert into User
             try:
-                sql_query = """insert into User values('{u}', '{p}', '{t}','0')"""
-                cursor.execute(sql_query.format(u=username, p=password, t=type))
+                sql_query = """insert into User values('{u}', '{p}', '{t}','0','{d}','{f}','{l}')"""
+                cursor.execute(sql_query.format(u=username, p=password, t=type, d=birth_date, f=first_name, l=last_name))
                 db.commit()
                 # insert into Signup_Approval
                 sql_query = """insert into Signup_Approval values('{}','{}')""".format(username, address)
@@ -167,7 +170,7 @@ def signup_form_redirect():
                 return 'Insertion Error: <br> maybe username is already used!'
         else:
             return 'school selected does not exist in database'
-        return redirect(url_for('notApprovedUser'))
+        return redirect('not-approved-user/{}'.format(username))
     else:
         return render_template('sign-up.html')
 
@@ -204,7 +207,7 @@ def handle_signin():
                 else:
                     return redirect('/simple-user/{}/{}'.format(type,username))
                     #return 'Succesfull login!  <br><br> valid user &emsp;' + username
-            else: return redirect(url_for('notApprovedUser'))
+            else: return redirect('/not-approved-user/{}'.format(username))
         
         ##### the below handles post request if you do not use a database
         '''
@@ -216,9 +219,27 @@ def handle_signin():
     else:
         return render_template('sign-in.html')
 
-@app.route("/not-approved-user")
-def notApprovedUser():
-    return render_template('not-approved-user.html')
+@app.route("/not-approved-user/<username>")
+def notApprovedUser(username):
+    cursor = db.cursor()
+    sql = "select type from User where username='{}'".format(username)
+    cursor.execute(sql)
+    type = cursor.fetchall()[0][0]
+    out = ''
+    if type=='librarian': out += 'Wait for the admin to validate you <br>'
+    else:
+        sql = '''select L.username, A.address, L.type
+                from User L, Signup_Approval S, Signup_Approval A
+                where S.username="{}" and  S.address=A.address and A.username=L.username and L.type="librarian" and L.valid=1;'''.format(username)
+        cursor.execute(sql)
+        librarians = cursor.fetchall()
+        
+        if not librarians: out += 'There are no valid librarians in this school. You will wait for your validation until there is a valid librarian for your school'
+        else:
+            out += 'One of those librarians may validate you: <br>'
+            for lib in librarians:
+                out += lib[0] + '<br>'
+    return render_template('not-approved-user.html', username=username) + out
 
 @app.route('/notValidLibrarians')
 @auth.login_required
@@ -252,7 +273,15 @@ def simple_user(type, username):
 @app.route("/simple-user/<type>/<username>/card")
 def simple_user_card(type, username):
     if not is_internal_request(): abort(401)
-    return 'Card of the valid member of School Library Network <br> {} ({}) '.format(username, type)
+    cursor = db.cursor()
+    sql = "select birth_date, first_name, last_name from User where username='{}'".format(username)
+    cursor.execute(sql)
+    birth_date, first_name, last_name = cursor.fetchall()[0]
+    return '''Card of the valid member of School Library Network <br> {} ({}) <br>
+               Birth Date = {} <br>
+                First Name = {} <br>
+                 Last Name = {} <br> '''.format(username, type, birth_date, first_name, last_name)
+
 @app.route("/librarian/<username>")
 def librarian(username):
     if not is_internal_request(): abort(401)

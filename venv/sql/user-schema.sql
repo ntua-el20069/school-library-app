@@ -20,6 +20,9 @@ create table User
 password varchar(20) not null,
 type varchar(20) not null check(type in ('student','teacher','librarian', 'admin')),
 valid boolean not null,
+birth_date date,
+first_name varchar(30),
+last_name varchar(30),
 primary key(username)
 );
 

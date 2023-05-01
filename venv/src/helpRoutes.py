@@ -52,7 +52,7 @@ def insert_user(db):
         count += 1
         if user:
             attr = user.split(',')
-            username, password = attr
+            username, password, birth_date, first_name, last_name  = attr
             ## accepts users with a probability of 0.5
             valid = 0 if random.randint(1,100)>50 else 1
             type = ''
@@ -64,10 +64,10 @@ def insert_user(db):
             else: type = 'student'
 
             try:
-                sql_query = """insert into User values('{u}','{p}','{t}',{v});"""
-                cursor.execute(sql_query.format(u=username,p=password,t=type,v=valid))
+                sql_query = """insert into User values('{u}','{p}','{t}',{v},'{d}','{f}','{l}');"""
+                cursor.execute(sql_query.format(u=username,p=password,t=type,v=valid,d=birth_date,f=first_name,l=last_name))
                 db.commit()
-                out = out + 'Username:  ' + username + ' &emsp;  Password:  ' + password + '<br>'
+                out += 'Username:  {} &emsp;  Password:  {}, &emsp; type={}, valid={}, birth_date: {}, first={}, last={}<br>'.format(username, password, type, valid, birth_date, first_name, last_name)
             except mysql.connector.Error as err:
                 print("Something went wrong: ", err)
         else:
