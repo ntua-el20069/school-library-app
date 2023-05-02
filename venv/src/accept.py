@@ -306,4 +306,28 @@ def update_book(db, ISBN, address):
         copies = cursor.fetchall()[0][0]
 
         return render_template('update-book.html', ISBN=ISBN, title=title, publisher=publisher, pages=pages, image=image, language=language, summary=summary, authors=authors, keywords=keywords, topics=topics, copies=copies)
-        
+
+def update_user(db, username):
+    cursor = db.cursor()
+    if request.method == 'POST':
+        birth_date = request.form.get('birth_date')
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')    
+        out = 'Update of user {}  <br>'.format(username)
+        try:
+            sql_query = """update User set birth_date='{d}', first_name='{f}', last_name='{l}' where username='{u}'"""
+            cursor.execute(sql_query.format(d=birth_date, f=first_name, l=last_name, u=username))
+            db.commit() 
+            out += "birth_date='{}', first_name='{}', last_name='{}'".format(birth_date, first_name, last_name)
+        except mysql.connector.Error as err:
+            print("Something went wrong: ", err)
+            return 'Update Error <br> '
+        return out
+    else:
+        sql = "select type, birth_date, first_name, last_name from User where username='{}'".format(username)
+        cursor.execute(sql)
+        type, birth_date, first_name, last_name = cursor.fetchall()[0]
+        if type=='teacher':
+            return render_template('update-user.html', username=username, birth_date=birth_date, first_name=first_name, last_name=last_name)
+        else:
+            return 'only teachers can update their info <br>'

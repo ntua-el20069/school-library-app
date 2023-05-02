@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title> update user </title>
+        <style>
+            body{
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            
+            form {
+                background-color: #cfd3ce;
+                padding: 2em;
+            }
+
+            label {
+                font-size: 0.8em;
+            }
+            input[type=text], input[type=password]{
+                width: 100%;
+                padding: 1em;
+                border: 1px solid #bbbbbb;
+                border-radius: 5px;
+                margin-top: 1em;
+                box-sizing: border-box;
+           }
+
+
+           input[type=submit]{
+                background-color: #34626C;
+                font-size:  1.2em;
+                color: white;
+           }
+
+        </style>
+    </head>
+
+    <body>
+        <form method='post' onsubmit="return(validate());">
+            <fieldset>
+                <legend> User Update</legend>
+                <label for="username"> Username</label><br>
+                <input type="text" id="username" name="username" readonly required value="{{username}}" placeholder="type your username"><br>
+                
+            
+                <label for="birth_date">Birth Date</label><br>
+                <input type="date" id="birth_date" name="birth_date" value="{{birth_date}}" required><br>
+                
+                <label for="first_name"> first name</label><br>
+                <input type="text" id="first_name" name="first_name" required value="{{first_name}}" placeholder="type your first name"><br>
+
+                <label for="last_name"> last name</label><br>
+                <input type="text" id="last_name" name="last_name" required value="{{last_name}}" placeholder="type your last name"><br>
+                
+                <input type="submit" value="Submission">
+            </fieldset>
+        </form>
+
+    </body>
+
+        <script>
+
+            function validate(){
+                
+                return true;
+                
+            }   
+        
+        </script>
+    
+    
+        
+    
+    
+    
+</html>

@@ -282,6 +282,11 @@ def simple_user_card(type, username):
                 First Name = {} <br>
                  Last Name = {} <br> '''.format(username, type, birth_date, first_name, last_name)
 
+@app.route("/<username>/update-user", methods=['GET', 'POST'])
+def update_user_route(username):
+    if not is_internal_request(): abort(401)
+    return update_user(db, username)
+
 @app.route("/librarian/<username>")
 def librarian(username):
     if not is_internal_request(): abort(401)
