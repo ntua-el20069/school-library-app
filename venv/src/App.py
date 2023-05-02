@@ -323,7 +323,7 @@ def add_existing_book_route(username):
     address = cursor.fetchall()[0][0]
     return add_existing_book(db, address)
 
-@app.route('/librarian/<username>/<ISBN>/update-book')
+@app.route('/librarian/<username>/<ISBN>/update-book', methods = ['GET', 'POST'])
 def update_book_route(username, ISBN):
     if not is_internal_request(): abort(401)
     cursor = db.cursor()

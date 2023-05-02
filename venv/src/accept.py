@@ -225,10 +225,51 @@ def restore(db, db_name):
         return render_template('restore.html')
 
 def update_book(db, ISBN, address):
+    cursor = db.cursor()
     if request.method == 'POST':
-        return ''
+        ISBN = request.form.get('ISBN')
+        title = request.form.get('title')
+        publisher = request.form.get('publisher')
+        pages = request.form.get('pages')
+        image = request.form.get('image')
+        language = request.form.get('language')
+        summary = request.form.get('summary').replace('<br>',' ').replace('\n',' ')
+        authors = request.form.get('authors').split(',')
+        topics = request.form.get('topics').split(',')
+        keywords = request.form.get('keywords').split(',')
+        copies = request.form.get('copies')
+        out = ''
+        try:
+            sql = '''update Book set title='{}', publisher='{}', pages={}, image='{}', language='{}', summary='{}' where ISBN="{}"'''.format( title, publisher, pages, image, language, summary, ISBN)
+            cursor.execute(sql)
+            sql = 'delete from Author where ISBN="{}"'.format(ISBN)
+            cursor.execute(sql)
+            sql = 'delete from Topic where ISBN="{}"'.format(ISBN)
+            cursor.execute(sql)
+            sql = 'delete from Keyword where ISBN="{}"'.format(ISBN)
+            cursor.execute(sql)
+            for author in authors:
+                sql = "insert into Author values('{}','{}')".format(ISBN, author.strip())
+                cursor.execute(sql)
+            for topic in topics:           
+                sql = "insert into Topic values('{}','{}')".format(ISBN, topic.strip())
+                cursor.execute(sql)
+            for keyword in keywords:
+                sql = "insert into Keyword values('{}','{}')".format(ISBN, keyword.strip())
+                cursor.execute(sql)
+            sql = '''update Available set books_number={} where ISBN="{}"'''.format(copies, ISBN)
+            cursor.execute(sql)
+            db.commit()
+            out += "ISBN = {}, title = {}, publisher = {}, pages = {}, image = {}, language = {},<br> &emsp; summary = {} <br><br>".format(ISBN, title, publisher, pages, image, language, summary)
+            out += "ISBN : {}, Authors: {} <br>".format(ISBN, authors)
+            out += "ISBN : {}, Topics: {} <br>".format(ISBN, topics)
+            out += "ISBN : {}, Keywords: {} <br>".format(ISBN, keywords)
+            out += "ISBN : {}, Address of School: {}, copies: {}".format(ISBN, address, copies)
+            return out
+        except mysql.connector.Error as err:
+            print("Something went wrong: ", err)
+            return "Error in update <br>"
     else:
-        cursor = db.cursor()
         sql = "select title, publisher, pages, image, language, summary from Book where ISBN='{}'".format(ISBN)
         cursor.execute(sql)
         title, publisher, pages, image, language, summary = cursor.fetchall()[0]

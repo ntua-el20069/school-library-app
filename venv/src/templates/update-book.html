@@ -53,32 +53,32 @@
                 <label for="ISBN"> ISBN</label><br>
                 <input type="text" id="ISBN" name="ISBN" value={{ISBN}} required readonly><br>
                 
-                <label for="title"> title: {{title}}</label><br>
-                <input type="text" id="title" name="title"  ><br>
+                <label for="title"> title: </label><br>
+                <input type="text" id="title" name="title" value="{{title}}" required><br>
 
-                <label for="publisher"> publisher: {{publisher}}</label><br>
-                <input type="text" id="publisher" name="publisher"  ><br>
+                <label for="publisher"> publisher: </label><br>
+                <input type="text" id="publisher" name="publisher" value="{{publisher}}"  required><br>
                 
                 <label for="pages"> pages</label><br>
                 <input type="number" id="pages" name="pages" value={{pages}} required><br>
 
-                <label for="image"> image url: {{image}}</label><br>
-                <input type="text" id="image" name="image"  ><br>
+                <label for="image"> image url: </label><br>
+                <input type="text" id="image" name="image" value="{{image}}" required><br>
 
-                <label for="language"> language: {{language}}</label><br>
-                <input type="text" id="language" name="language"  ><br>
+                <label for="language"> language: </label><br>
+                <input type="text" id="language" name="language" value="{{language}}" required><br>
 
-                <label for="summary"> summary: {{summary}}</label><br>
-                <textarea type="text" id="summary" name="summary"  ></textarea><br>
+                <label for="summary"> summary: </label><br>
+                <textarea type="text" id="summary" name="summary"  required>{{summary}}</textarea><br>
 
-                <label for="authors"> Authors: {{authors}}</label><br>
-                <input type="text" id="authors" name="authors"   placeholder="Kazantzakis, Omiros, Karyotakis"><br>
+                <label for="authors"> Authors: </label><br>
+                <input type="text" id="authors" name="authors" value="{{authors}}" required  placeholder="Kazantzakis, Omiros, Karyotakis"><br>
                 
-                <label for="topics"> Topics:  {{topics}}</label><br>
-                <input type="text" id="topics" name="topics"   placeholder="Math, Poems"><br>
+                <label for="topics"> Topics:  </label><br>
+                <input type="text" id="topics" name="topics" value="{{topics}}" required placeholder="Math, Poems"><br>
 
-                <label for="keywords"> Keywords: {{keywords}}</label><br>
-                <input type="text" id="keywords" name="keywords"   placeholder="differential equations, integrals"><br>
+                <label for="keywords"> Keywords: </label><br>
+                <input type="text" id="keywords" name="keywords" value="{{keywords}}"  required placeholder="differential equations, integrals"><br>
 
                 <label for="copies"> copies</label><br>
                 <input type="number" id="copies" name="copies" value={{copies}} required><br>
@@ -93,7 +93,7 @@
             
         
             function validate(){
-                // here if an input is '' then we will fill it with the default.. {{...}}
+                // here if an input is _ then we will fill it with the default
                 let pages = Number(document.getElementById('pages').value);
                 console.log(document.getElementById('pages').value);
                 let copies = Number(document.getElementById('copies').value);
