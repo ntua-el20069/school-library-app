@@ -10,7 +10,7 @@ from .accept import *
 app = Flask(__name__)
 auth = HTTPBasicAuth()
 
-db_name = "users_libraries_books" 
+db_name = "school_library_network" 
 
 db = mysql.connector.connect(
     host="localhost",

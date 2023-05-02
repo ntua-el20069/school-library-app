@@ -1,8 +1,7 @@
-DROP SCHEMA IF EXISTS users_and_libraries;
-DROP SCHEMA IF EXISTS users_and_libraries_backup;
-DROP SCHEMA IF EXISTS users_libraries_books;
-CREATE SCHEMA users_libraries_books;
-USE users_libraries_books;
+DROP SCHEMA IF EXISTS school_library_network;
+DROP SCHEMA IF EXISTS school_library_network_backup;
+CREATE SCHEMA school_library_network;
+USE school_library_network;
 
 DROP TABLE IF EXISTS User; 
 DROP TABLE IF EXISTS Signup_Approval; 
@@ -12,8 +11,16 @@ DROP TABLE IF EXISTS Available;
 DROP TABLE IF EXISTS Author;
 DROP TABLE IF EXISTS Topic;
 DROP TABLE IF EXISTS Keyword;     
+DROP TABLE IF EXISTS Review;
+DROP TABLE IF EXISTS Borrowing;
+DROP TABLE IF EXISTS Reservation; 
 
-
+/* 
+    Some constraints need to be added
+    In this time, we have on update restrict, on delete restrict in every foreign key...
+    WARNING!!!!
+    If you change something, change this comment too!
+*/
 
 create table User 
 (username varchar(20) not null,
@@ -89,5 +96,44 @@ create table Keyword
     ISBN varchar(20) not null,
     keyword varchar(50) not null,
     primary key (ISBN, keyword),
+    constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict
+);
+
+create table Review 
+(
+    username varchar(20) not null,
+    ISBN varchar(20) not null,
+    likert int,
+    review_text text,
+    approval boolean,
+    primary key (username, ISBN),
+    constraint foreign key (username) references User(username) on update restrict on delete restrict,
+    constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict
+);
+
+create table Borrowing
+(
+    username varchar(20) not null,
+    address varchar(50) NOT NULL,
+    ISBN varchar(20) not null,
+    start_date date,
+    returned boolean,
+    approval boolean,
+    primary key (username, address, ISBN),
+    constraint foreign key (username) references User(username) on update restrict on delete restrict,
+    constraint foreign key (address) references School_Library(address) on update restrict on delete restrict,
+    constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict
+);
+
+create table Reservation
+(
+    username varchar(20) not null,
+    address varchar(50) NOT NULL,
+    ISBN varchar(20) not null,
+    start_date date,
+    approval boolean,
+    primary key (username, address, ISBN),
+    constraint foreign key (username) references User(username) on update restrict on delete restrict,
+    constraint foreign key (address) references School_Library(address) on update restrict on delete restrict,
     constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict
 );
