@@ -103,7 +103,7 @@ create table Review
 (
     username varchar(20) not null,
     ISBN varchar(20) not null,
-    likert int,
+    likert int check (likert in (1,2,3,4,5)),
     review_text text,
     approval boolean,
     primary key (username, ISBN),

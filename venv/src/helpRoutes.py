@@ -16,7 +16,7 @@ def sample():
     return render_template('sample-page.html')
 
 def insert(db):
-    return insert_user(db) + insert_lib(db) + insert_signup_approval(db) + insert_book(db) + insert_available(db)
+    return insert_user(db) + insert_lib(db) + insert_signup_approval(db) + insert_book(db) + insert_available(db) + insert_review(db)
 
 def create(db):
 
@@ -297,3 +297,36 @@ def insert_available(db):
             except mysql.connector.Error as err:
                 print("Something went wrong: ", err)
     return out
+
+def insert_review(db):
+    # read csv with review texts
+    fd = open('venv\csv\\review-texts.csv', 'r', encoding="utf-8")
+    csvFile = fd.read()
+    fd.close()
+    csvTuples = csvFile.split('\n')
+    out = ''
+    
+    cursor = db.cursor()
+    sql = "select ISBN from Book"
+    cursor.execute(sql)
+    books = random.choices(cursor.fetchall(), k = 200)  # maybe a book can be choosed two or more times
+    sql = "select username from User"
+    cursor.execute(sql)
+    users = random.choices(cursor.fetchall(), k = 200)
+    
+    for review_text in csvTuples:    
+        ISBN = random.choice(books)[0]
+        username = random.choice(users)[0]
+        likert = random.choice([1,2,3,4,5])
+        approval = 1 if random.randint(1,100)<65 else 0  # approves the review with a probability of 0.65
+        review_text = review_text.replace('"','')
+        try:
+            sql = "insert into Review values ('{}','{}',{},'{}',{})".format(username, ISBN, likert, review_text, approval)
+            cursor.execute(sql)
+            db.commit()
+            out += "username = {}, ISBN = {}, likert = {}, review_text = {}, approval = {} <br>".format(username, ISBN, likert, review_text, approval)
+        except mysql.connector.Error as err:
+                print("Something went wrong: ", err)
+    
+    return out
+

@@ -136,6 +136,11 @@ def insert_available_route():
 def insert_signup_approval_route():
     return insert_signup_approval(db)
 
+@app.route('/insert-review')
+@auth.login_required
+def insert_review_route():
+    return insert_review(db)
+
 @app.route("/signup", methods=['GET', 'POST'])
 def signup_form_redirect():
     if request.method == 'POST':
