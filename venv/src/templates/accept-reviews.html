@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accept Reviews</title>
+    <style>
+        label[for=accept]{
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1> Not approved reviews </h1>
+    <form method="post">
+        <ul id="notApprovedReviews">
+            <!-- Here will be positioned the notApprovedReviews with accept inputs-->
+        </ul>
+        <input type="submit" value="Accept selected reviews">
+        </form>
+</body>
+<script>
+    listRoot = document.getElementById('notApprovedReviews')
+    fetch('/notApprovedReviews')
+        .then(response => response.json())
+        .then(Reviews => {
+            console.log(Reviews); 
+            const myList = Reviews.Reviews.map(item => item);
+            console.log(myList); 
+            for (let review of myList){
+            let option = document.createElement("li");
+            option.value = review;
+            option.innerHTML = `username=${review[0]}, ISBN=${review[1]}, <br> likert=${review[2]}, <br> review_text=${review[3]} <br>`
+            
+            let labelAccept = document.createElement('label');
+            labelAccept.setAttribute('for', 'accept')
+            labelAccept.textContent = 'accept';
+
+            let accept = document.createElement("input");
+            accept.setAttribute('type','radio');
+            accept.setAttribute('name', review[0]+review[1]);
+            accept.setAttribute('value','accept');
+            
+            let p = document.createElement("p");
+            //p.innerHTML = "<br>";
+            
+            option.appendChild(accept);
+            option.appendChild(labelAccept);
+            option.appendChild(p);
+            
+            listRoot.appendChild(option);
+        }
+        });
+</script>
+</html>

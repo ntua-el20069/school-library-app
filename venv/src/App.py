@@ -246,6 +246,11 @@ def notApprovedUser(username):
                 out += lib[0] + '<br>'
     return render_template('not-approved-user.html', username=username) + out
 
+@app.route('/notApprovedReviews')
+def not_approved_reviews_route():
+    if not is_internal_request(): abort(401)
+    return notApprovedReviews(db)
+
 @app.route('/notValidLibrarians')
 @auth.login_required
 def notValidLibrarians():
@@ -342,9 +347,20 @@ def update_book_route(username, ISBN):
     address = cursor.fetchall()[0][0]
     return update_book(db, ISBN, address)
 
-@app.route('/books-in-system')
-def books_in_system_route():
-    return books_in_system(db)
+@app.route('/<username>/books-in-system')
+def books_in_system_route(username):
+    if not is_internal_request(): abort(401)
+    return books_in_system(db, username)
+
+@app.route('/<username>/<ISBN>/review', methods=['GET', 'POST'])
+def review_route(username, ISBN):
+    if not is_internal_request(): abort(401)
+    return review(db, username, ISBN)
+
+@app.route('/accept-review', methods=['GET', 'POST'])
+def accept_review_route():
+    if not is_internal_request(): abort(401)
+    return accept_review(db)
 
 @app.route('/<username>/books-in-this-school')
 def books_in_this_school_route(username):
@@ -372,6 +388,7 @@ def backup_route():
 @auth.login_required
 def restore_route():
     return restore(db, db_name)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

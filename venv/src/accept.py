@@ -20,11 +20,16 @@ def accept_librarians(db):
         for lib in notValidLibrarians:
             mode = request.form.get(lib[0])
             if mode=='accept': 
-                out += lib[0] + ' accepted <br>' 
+                 
                 ## it is not an efficient way ...
-                sql_query = "update User set valid=1 where username='{}'".format(lib[0])
-                cursor.execute(sql_query)
-                db.commit()
+                try:
+                    sql_query = "update User set valid=1 where username='{}'".format(lib[0])
+                    cursor.execute(sql_query)
+                    db.commit()
+                    out += lib[0] + ' accepted <br>'
+                except mysql.connector.Error as err:
+                    print("Something went wrong: ", err)
+                    return 'Update Error <br> '
         #out += '<br> <a href="/admin">Admin page</a>'
         return out
     else:
@@ -41,15 +46,44 @@ def accept_users(db, lib_username):
             mode = request.form.get(user[0])
             if mode=='accept':  
                 ## it is not an efficient way ...
-                sql_query = "update User set valid=1 where username='{}'".format(user[0])
-                cursor.execute(sql_query)
-                db.commit()
-                out += user[0] + ' accepted <br>'
+                try:
+                    sql_query = "update User set valid=1 where username='{}'".format(user[0])
+                    cursor.execute(sql_query)
+                    db.commit()
+                    out += user[0] + ' accepted <br>'
+                except mysql.connector.Error as err:
+                    print("Something went wrong: ", err)
+                    return 'Update Error <br> '
         out += '<br> <a href="/librarian/{}">librarian  page</a>'.format(lib_username)
         return out
     else:
         return render_template('accept-users.html', lib_username=lib_username)
     
+def accept_review(db):
+    if request.method == 'POST':
+        cursor = db.cursor()
+        cursor.execute("select username, ISBN from Review where approval=0")
+        notValidReviews = cursor.fetchall()
+        print(notValidReviews)
+        out = ''
+        for review in notValidReviews:
+            mode = request.form.get(review[0]+review[1])
+            print(mode)
+            if mode=='accept':  
+                ## it is not an efficient way ...
+                try:
+                    sql_query = "update Review set approval=1 where username='{}' and ISBN='{}'".format(review[0], review[1])
+                    cursor.execute(sql_query)
+                    db.commit()
+                    out += 'Review of user: ' + review[0] + ' about book with ISBN: '+ review[1] + ' accepted <br>'
+                except mysql.connector.Error as err:
+                    print("Something went wrong: ", err)
+                    return 'Update Error <br> '
+                
+        return out
+    else:
+        return render_template('accept-reviews.html') 
+
 def insert_school(db):
     if not is_internal_request(): abort(401)
     if request.method == 'POST':

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title> Review book </title>
+        <style>
+            body{
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            
+            form {
+                background-color: #cfd3ce;
+                padding: 2em;
+            }
+
+            label {
+                font-size: 0.8em;
+            }
+            input[type=text], input[type=email], input[type=number]{
+                width: 100%;
+                padding: 1em;
+                border: 1px solid #bbbbbb;
+                border-radius: 5px;
+                margin: 1em;
+                box-sizing: border-box;
+           }
+           
+           textarea {
+                width: 80%;
+                height: 10em;
+                padding: 1em;
+                border: 1px solid #bbbbbb;
+                border-radius: 5px;
+                margin: 1em;
+                box-sizing: border-box;
+           }
+
+           input[type=submit]{
+                background-color: #34626C;
+                font-size:  1.2em;
+                color: white;
+           }
+
+        </style>
+    </head>
+
+    <body>
+        <form method='post' onsubmit="return(validate());">
+            <fieldset>
+                <legend> Review book  </legend>
+                
+                <label for="ISBN"> ISBN</label><br>
+                <input type="text" id="ISBN" name="ISBN" value={{ISBN}} required readonly><br>
+                
+                <label for="title"> title: </label><br>
+                <input type="text" id="title" name="title" value="{{title}}" readonly required><br>
+
+                <label for="review"> review: </label><br>
+                <textarea type="text" id="review" name="review"  required></textarea><br>
+
+                <label for="likert" class="range" > Likert scale review </label><br>
+                <input type="range" id="likert" min="0" max="5" step="1" value="5" name="likert">
+                <output id="show">5: Excellent</output><br><br>
+                
+                <input type="submit" value="Submission">
+            </fieldset>
+        </form>
+
+    </body>
+
+        <script>
+            
+        
+            function validate(){
+                return true;
+            }   
+            
+            let likert_scale = {
+                0: "Awful",
+                1: "Bad",
+                2: "Mediocre",
+                3: "Good",
+                4: "Very Good",
+                5: "Excellent"
+            }
+
+            // range bar
+            const h = document.querySelector("#likert");
+            const show = document.querySelector("#show");
+            h.addEventListener("input", (ev)=>{
+                show.value = h.value + `: ${likert_scale[h.value]}`;
+            })
+     
+        </script>
+    
+
+</html>

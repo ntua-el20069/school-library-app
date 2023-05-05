@@ -130,15 +130,40 @@ def get_schools_list(db):
     schools = cursor.fetchall()
     return jsonify(schools=schools)
 
-def books_in_system(db):
+def books_in_system(db, username):
     out = 'Books in System <br><br><br>'
     cursor = db.cursor()
     sql = "select title, ISBN from Book;"
     cursor.execute(sql)
     books = cursor.fetchall()
     for book in books:
-        if book: out += "Title: {}, ISBN: {} <br>".format(book[0], book[1])
+        if book: out += "Title: {},<br> ISBN: {} <br> <a href='/{}/{}/review'> Review </a> <br><br>".format(book[0], book[1], username, book[1])
     return out
+
+def review(db, username, ISBN):
+    cursor = db.cursor()
+    if request.method == 'POST':
+        out = ''
+        likert = request.form.get('likert')
+        review_text = request.form.get('review')
+        sql = f"select type from User where username='{username}'"
+        cursor.execute(sql)
+        type = cursor.fetchall()[0][0]
+        approval = 0 if type=='student' else 1
+        try:
+            sql = f"insert into Review  values ('{username}' , '{ISBN}' , {likert} , '{review_text}' , {approval})"
+            cursor.execute(sql)
+            db.commit()
+            out = f'Review: ({likert}) was successfully inserted <br>'
+        except mysql.connector.Error as err:
+            print("Something went wrong: ", err)
+            out += 'There is an error- maybe duplicate insert into Review <br>'
+        return out
+    else:
+        sql = f"select title from Book where ISBN='{ISBN}'"
+        cursor.execute(sql)
+        title = cursor.fetchall()[0][0]
+        return render_template('review.html', username=username, ISBN=ISBN, title=title) 
 
 def books_in_this_school(db, address, username):
     out = 'Books in this School <br><br><br>'
@@ -192,6 +217,13 @@ def ValidUsers(db, lib_username, valid_bool): # call it with 1 for valid users a
         Users = cursor.fetchall()
         return jsonify(Users=Users)
     
+def notApprovedReviews(db):
+    cursor = db.cursor()
+    sql = "select username, ISBN, likert, review_text from Review where approval=0"
+    cursor.execute(sql)
+    Reviews = cursor.fetchall()
+    return jsonify(Reviews=Reviews)
+
 def insert_book(db):
     fd = open('venv\csv\insert-book.csv', 'r', encoding="utf-8")
     csvFile = fd.read()
