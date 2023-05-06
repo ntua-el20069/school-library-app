@@ -33,7 +33,15 @@ def accept_librarians(db):
         #out += '<br> <a href="/admin">Admin page</a>'
         return out
     else:
-        return render_template('accept-librarians.html')
+        cursor = db.cursor()
+        out = 'These Schools have librarians: <br>'
+        sql = '''select address, U.username from Signup_Approval S, User U
+                 where U.username = S.username and U.type = "librarian" and U.valid=1'''
+        cursor.execute(sql)
+        addresses = cursor.fetchall()
+        for tup in addresses:
+            out += f"address: {tup[0]} librarian: {tup[1]}<br>"
+        return render_template('accept-librarians.html') + out
     
 def accept_users(db, lib_username):
     if not is_internal_request(): abort(401)

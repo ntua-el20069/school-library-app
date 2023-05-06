@@ -60,7 +60,9 @@ def insert_user(db):
                 type='admin'
                 valid=1 
             elif count%10 == 0: type = 'teacher'
-            elif count%12==0: type = 'librarian'
+            elif count%12==0: 
+                type = 'librarian'
+                valid = 1
             else: type = 'student'
 
             try:
@@ -107,21 +109,37 @@ def insert_lib(db):
 
 def insert_signup_approval(db):
     cursor = db.cursor()
-    cursor.execute("SELECT username FROM User")
+    cursor.execute("SELECT username, type FROM User")
     users = cursor.fetchall()
     cursor.execute("SELECT address FROM School_Library")
     libs = cursor.fetchall()
-    out = ''
+    libs_for_librarians = [lib[0] for lib in libs] # that's the list we use for librarians
+    out = '' 
     for tup in users:
-        address =  random.choice(libs)[0]
-        username = tup[0]
+        username, type = tup
+        if type=='librarian': # this is used to make each school have up to one librarian
+            if libs_for_librarians:
+                address = libs_for_librarians[0]
+                libs_for_librarians.pop(0)
+            else:
+                address =  random.choice(libs)[0]
+                try: 
+                    sql = f"update User set valid=0 where username='{username}'"
+                    cursor.execute(sql)
+                    db.commit()
+                    out += f"user {username} has valid=0 now! <br>"
+                except mysql.connector.Error as err:
+                    print("Something went wrong: ", err) 
+                    return "<h1>Update Error!!!</h1>"   
+        else:
+            address =  random.choice(libs)[0]
         try:
             sql_query = "insert into Signup_Approval values('{}','{}');".format(username, address)
             cursor.execute(sql_query)
             db.commit()
             out = out + username + ' ' + address + '<br>'
         except mysql.connector.Error as err:
-                print("Something went wrong: ", err)
+            print("Something went wrong: ", err)
     return out
 
 def get_schools_list(db):
@@ -342,21 +360,21 @@ def insert_review(db):
     sql = "select ISBN from Book"
     cursor.execute(sql)
     books = random.choices(cursor.fetchall(), k = 200)  # maybe a book can be choosed two or more times
-    sql = "select username from User"
+    sql = "select username, type from User"
     cursor.execute(sql)
     users = random.choices(cursor.fetchall(), k = 200)
     
     for review_text in csvTuples:    
         ISBN = random.choice(books)[0]
-        username = random.choice(users)[0]
+        username, type = random.choice(users)
         likert = random.choice([1,2,3,4,5])
-        approval = 1 if random.randint(1,100)<65 else 0  # approves the review with a probability of 0.65
+        approval = 1 if type!='student' or random.randint(1,100)<60 else 0  # approves the review of librarians, teachers, admin and for students with a probability of 0.6
         review_text = review_text.replace('"','')
         try:
             sql = "insert into Review values ('{}','{}',{},'{}',{})".format(username, ISBN, likert, review_text, approval)
             cursor.execute(sql)
             db.commit()
-            out += "username = {}, ISBN = {}, likert = {}, review_text = {}, approval = {} <br>".format(username, ISBN, likert, review_text, approval)
+            out += "username = {}, type={}, ISBN = {}, likert = {}, review_text = {}, approval = {} <br>".format(username, type, ISBN, likert, review_text, approval)
         except mysql.connector.Error as err:
                 print("Something went wrong: ", err)
     

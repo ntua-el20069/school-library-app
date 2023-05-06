@@ -256,12 +256,12 @@ def not_approved_reviews_route():
 def notValidLibrarians():
     cursor = db.cursor()
     # find librarians that are not approved yet
-    cursor.execute("SELECT * FROM User join Signup_Approval on User.username = Signup_Approval.username where valid=0 and type='librarian';")
+    cursor.execute("SELECT User.username, User.type, Signup_Approval.address FROM User join Signup_Approval on User.username = Signup_Approval.username where valid=0 and type='librarian';")
     notValidLibrarians = cursor.fetchall()
     # 
     out = 'Not valid librarians (username, password) <br>'
     for tup in notValidLibrarians:
-        out = out + tup[0] + ' ' + tup[1] + ' ' + tup[2] + ' ' + str(tup[3]) + ' ' + tup[4] + ' ' + tup[5] +  '<br>'
+        out = out + tup[0] + ' ' + tup[1] + ' ' + tup[2] + '<br>'
     
     return jsonify(notValidLibrarians=notValidLibrarians) 
 
