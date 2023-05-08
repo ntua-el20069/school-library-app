@@ -41,7 +41,7 @@ def insert_from_dml(db):
     
 def create(db):
 
-    fd = open('venv\\sql\\user-schema.sql', 'r', encoding="utf-8")
+    fd = open('venv\\sql\\create-schema.sql', 'r', encoding="utf-8")
     sqlFile = fd.read()
     fd.close()
 

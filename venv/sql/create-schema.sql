@@ -119,10 +119,12 @@ create table Borrowing
     start_date date,
     returned boolean,
     approval boolean,
+    librarian varchar(20),
     primary key (username, address, ISBN),
     constraint foreign key (username) references User(username) on update restrict on delete restrict,
     constraint foreign key (address) references School_Library(address) on update restrict on delete restrict,
-    constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict
+    constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict,
+    constraint foreign key (librarian) references User(username) on update restrict on delete restrict
 );
 
 create table Reservation
