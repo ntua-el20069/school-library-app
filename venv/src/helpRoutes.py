@@ -16,11 +16,32 @@ def sample():
     return render_template('sample-page.html')
 
 def insert(db):
-    return insert_user(db) + insert_lib(db) + insert_signup_approval(db) + insert_book(db) + insert_available(db) + insert_review(db)
+    write_dml = True
+    f ='venv\\sql\\insert-schema.sql'
+    if write_dml:
+        with open(f, 'w', encoding="utf-8") as fd: 
+            fd.write("") # clear dml file
+    return insert_user(db, f, write_dml) + insert_lib(db, f, write_dml) + insert_signup_approval(db, f, write_dml) + insert_book(db, f, write_dml) + insert_available(db, f, write_dml) + insert_review(db, f, write_dml)
 
+def insert_from_dml(db):
+    fd = open('venv\\sql\\insert-schema.sql', 'r', encoding="utf-8")
+    sqlFile = fd.read()
+    fd.close()
+    sqlCommands = sqlFile.split(';')
+
+    for command in sqlCommands:
+        # This will skip and report errors
+        try:
+            cursor = db.cursor()
+            cursor.execute(command)
+            db.commit()
+        except mysql.connector.Error as err:
+            print("Something went wrong: ", err)
+    return 'inserted data from dml script'
+    
 def create(db):
 
-    fd = open('venv\\sql\\user-schema.sql', 'r')
+    fd = open('venv\\sql\\user-schema.sql', 'r', encoding="utf-8")
     sqlFile = fd.read()
     fd.close()
 
@@ -39,7 +60,7 @@ def create(db):
         
     return 'creates a db and a table inside'
 
-def insert_user(db):
+def insert_user(db, f, write_dml):
     fd = open('venv\csv\insert-user.csv', 'r', encoding="utf-8")
     csvFile = fd.read()
     fd.close()
@@ -67,16 +88,20 @@ def insert_user(db):
 
             try:
                 sql_query = """insert into User values('{u}','{p}','{t}',{v},'{d}','{f}','{l}');"""
-                cursor.execute(sql_query.format(u=username,p=password,t=type,v=valid,d=birth_date,f=first_name,l=last_name))
+                sql = sql_query.format(u=username,p=password,t=type,v=valid,d=birth_date,f=first_name,l=last_name)
+                cursor.execute(sql)
                 db.commit()
                 out += 'Username:  {} &emsp;  Password:  {}, &emsp; type={}, valid={}, birth_date: {}, first={}, last={}<br>'.format(username, password, type, valid, birth_date, first_name, last_name)
+                if write_dml:
+                    with open(f, 'a', encoding="utf-8") as fd:
+                        fd.write(sql + ';' + '\n')
             except mysql.connector.Error as err:
                 print("Something went wrong: ", err)
         else:
             break
     return out
 
-def insert_lib(db):
+def insert_lib(db, f, write_dml):
     fd = open('venv\csv\insert-lib.csv', 'r', encoding="utf-8")
     csvFile = fd.read()
     fd.close()
@@ -96,10 +121,13 @@ def insert_lib(db):
             address, city, phone, email, principal, library_admin = attr
         
             try:
-                sql_query = """insert into School_Library values('{}','{}','{}','{}','{}','{}','{}');""".format(address, name, city, phone, email, principal, library_admin)
-                cursor.execute(sql_query)
+                sql = """insert into School_Library values('{}','{}','{}','{}','{}','{}','{}');""".format(address, name, city, phone, email, principal, library_admin)
+                cursor.execute(sql)
                 db.commit()
                 out = out + 'address={}, name={}, city={}, phone={}, email={}, principal={}, library_admin={}'.format(address, name, city, phone, email, principal, library_admin) + '<br>'
+                if write_dml:
+                    with open(f, 'a', encoding="utf-8") as fd:
+                        fd.write(sql + ';' + '\n')
             except mysql.connector.Error as err:
                 print("Something went wrong: ", err)
         else:
@@ -107,7 +135,7 @@ def insert_lib(db):
             
     return out
 
-def insert_signup_approval(db):
+def insert_signup_approval(db, f, write_dml):
     cursor = db.cursor()
     cursor.execute("SELECT username, type FROM User")
     users = cursor.fetchall()
@@ -128,16 +156,22 @@ def insert_signup_approval(db):
                     cursor.execute(sql)
                     db.commit()
                     out += f"user {username} has valid=0 now! <br>"
+                    if write_dml:
+                        with open(f, 'a', encoding="utf-8") as fd:
+                            fd.write(sql + ';' + '\n')
                 except mysql.connector.Error as err:
                     print("Something went wrong: ", err) 
                     return "<h1>Update Error!!!</h1>"   
         else:
             address =  random.choice(libs)[0]
         try:
-            sql_query = "insert into Signup_Approval values('{}','{}');".format(username, address)
-            cursor.execute(sql_query)
+            sql = "insert into Signup_Approval values('{}','{}');".format(username, address)
+            cursor.execute(sql)
             db.commit()
             out = out + username + ' ' + address + '<br>'
+            if write_dml:
+                with open(f, 'a', encoding="utf-8") as fd:
+                    fd.write(sql + ';' + '\n')
         except mysql.connector.Error as err:
             print("Something went wrong: ", err)
     return out
@@ -242,7 +276,7 @@ def notApprovedReviews(db):
     Reviews = cursor.fetchall()
     return jsonify(Reviews=Reviews)
 
-def insert_book(db):
+def insert_book(db, f, write_dml):
     fd = open('venv\csv\insert-book.csv', 'r', encoding="utf-8")
     csvFile = fd.read()
     fd.close()
@@ -257,11 +291,15 @@ def insert_book(db):
             
             ISBN, title, publisher, pages, image, language = book.split(",")[0:6]
             summary = ','.join(book.split(",")[6:])
+            summary = summary.replace("'","").replace('"','').replace(";",",")
             try:
                 sql = '''insert into Book values ("{}","{}","{}",{},"{}","{}","{}")'''.format(ISBN, title, publisher, pages, image, language, summary)
                 cursor.execute(sql)
                 db.commit()
                 out += "ISBN = {}, title = {}, publisher = {}, pages = {}, image = {}, language = {},<br> &emsp; summary = {} <br><br>".format(ISBN, title, publisher, pages, image, language, summary)
+                if write_dml:
+                    with open(f, 'a', encoding="utf-8") as fd:
+                        fd.write(sql + ';' + '\n')
             except mysql.connector.Error as err:
                 print("Something went wrong: ", err)
         else:
@@ -301,6 +339,9 @@ def insert_book(db):
                 cursor.execute(sql)
                 db.commit()
                 out += "ISBN : {}, Topic: {} <br>".format(book[0], topic)
+                if write_dml:
+                    with open(f, 'a', encoding="utf-8") as fd:
+                        fd.write(sql + ';' + '\n')
             except mysql.connector.Error as err:
                 print("Something went wrong: ", err)
         for i in range(random.randint(3,5)): # inserts three to five keywords
@@ -310,6 +351,9 @@ def insert_book(db):
                 cursor.execute(sql)
                 db.commit()
                 out += "ISBN : {}, Keyword: {} <br>".format(book[0], keyword)
+                if write_dml:
+                    with open(f, 'a', encoding="utf-8") as fd:
+                        fd.write(sql + ';' + '\n')
             except mysql.connector.Error as err:
                 print("Something went wrong: ", err)
         for i in range(random.randint(1,3)): # inserts one to three authors
@@ -319,13 +363,16 @@ def insert_book(db):
                 cursor.execute(sql)
                 db.commit()
                 out += "ISBN : {}, Author: {} <br>".format(book[0], author)
+                if write_dml:
+                    with open(f, 'a', encoding="utf-8") as fd:
+                        fd.write(sql + ';' + '\n')
             except mysql.connector.Error as err:
                 print("Something went wrong: ", err)
             
         
     return out    
 
-def insert_available(db):
+def insert_available(db, f, write_dml):
     cursor = db.cursor()
     sql = "select ISBN from Book"
     cursor.execute(sql)
@@ -344,11 +391,14 @@ def insert_available(db):
                 cursor.execute(sql)
                 db.commit()
                 out += 'ISBN: {}, address of school: {}, copies={} <br>'.format(book[0], address, copies)
+                if write_dml:
+                    with open(f, 'a', encoding="utf-8") as fd:
+                        fd.write(sql + ';' + '\n')
             except mysql.connector.Error as err:
                 print("Something went wrong: ", err)
     return out
 
-def insert_review(db):
+def insert_review(db, f, write_dml):
     # read csv with review texts
     fd = open('venv\csv\\review-texts.csv', 'r', encoding="utf-8")
     csvFile = fd.read()
@@ -369,12 +419,15 @@ def insert_review(db):
         username, type = random.choice(users)
         likert = random.choice([1,2,3,4,5])
         approval = 1 if type!='student' or random.randint(1,100)<60 else 0  # approves the review of librarians, teachers, admin and for students with a probability of 0.6
-        review_text = review_text.replace('"','')
+        review_text = review_text.replace('"','').replace("'","").replace(";",",")
         try:
             sql = "insert into Review values ('{}','{}',{},'{}',{})".format(username, ISBN, likert, review_text, approval)
             cursor.execute(sql)
             db.commit()
             out += "username = {}, type={}, ISBN = {}, likert = {}, review_text = {}, approval = {} <br>".format(username, type, ISBN, likert, review_text, approval)
+            if write_dml:
+                    with open(f, 'a', encoding="utf-8") as fd:
+                        fd.write(sql + ';' + '\n')
         except mysql.connector.Error as err:
                 print("Something went wrong: ", err)
     

@@ -97,11 +97,17 @@ def sample_route():
 def create_route():
     return create(db)
 
-# insert all
+# insert all and write dml script...
 @app.route("/insert")
 @auth.login_required
 def insert_route():
     return insert(db)
+
+# insert from dml
+@app.route("/dml")
+@auth.login_required
+def dml():
+    return insert_from_dml(db)
 
 # insert data into User 
 @app.route('/insert-user')
