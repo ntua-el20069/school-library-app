@@ -3,6 +3,7 @@ from flask_httpauth import HTTPBasicAuth
 import mysql.connector 
 import random
 from .helpRoutes import is_internal_request
+from datetime import datetime, timedelta
 
 
 ## Here are some functions for Routes that accept librarians (from admin), users (from librarian)
@@ -14,29 +15,38 @@ from .helpRoutes import is_internal_request
 def accept_librarians(db):
     if request.method == 'POST':
         cursor = db.cursor()
-        cursor.execute("select username from User where type='librarian' and valid=0")
+        cursor.execute("select username, address from User where type='librarian' and valid=0")
         notValidLibrarians = cursor.fetchall()
         out = ''
         for lib in notValidLibrarians:
             mode = request.form.get(lib[0])
             if mode=='accept': 
-                 
-                ## it is not an efficient way ...
-                try:
-                    sql_query = "update User set valid=1 where username='{}'".format(lib[0])
-                    cursor.execute(sql_query)
-                    db.commit()
-                    out += lib[0] + ' accepted <br>'
-                except mysql.connector.Error as err:
-                    print("Something went wrong: ", err)
-                    return 'Update Error <br> '
+                sql = f"select F.address, F.username from User F, User S where F.address = S.address and F.type='librarian' and F.valid=1 and S.username='{lib[0]}'"
+                cursor.execute(sql)
+                existing_librarian = cursor.fetchall()
+                if not existing_librarian:
+                    ## it is not an efficient way ...
+                    try:
+                        sql_query = "update User set valid=1 where username='{}'".format(lib[0])
+                        cursor.execute(sql_query)
+                        db.commit()
+                        sql_query = "update School_Library set username='{}' where address='{}'".format(lib[0],  lib[1])
+                        cursor.execute(sql_query)
+                        db.commit()
+                        out += lib[0] + ' accepted <br>'
+                    except mysql.connector.Error as err:
+                        print("Something went wrong: ", err)
+                        return 'Update Error <br> '
+                else:
+                    print(existing_librarian)
+                    out += f"School with address {existing_librarian[0][0]} has existing librarian: {existing_librarian[0][1]}. So {lib[0]} cannot be approved <br>"
         #out += '<br> <a href="/admin">Admin page</a>'
         return out
     else:
         cursor = db.cursor()
         out = 'These Schools have librarians: <br>'
-        sql = '''select address, U.username from Signup_Approval S, User U
-                 where U.username = S.username and U.type = "librarian" and U.valid=1'''
+        sql = '''select address, username from  User 
+                 where type = "librarian" and valid=1'''
         cursor.execute(sql)
         addresses = cursor.fetchall()
         for tup in addresses:
@@ -101,14 +111,14 @@ def insert_school(db):
         email = request.form.get('email')
         phone = request.form.get('phone')
         principal = request.form.get('principal')
-        library_admin = request.form.get('libAdmin')
+        #library_admin = request.form.get('libAdmin')
         cursor = db.cursor()
         try:
-            sql_query = """insert into School_Library values('{}','{}','{}','{}','{}','{}','{}');""".format(address, name, city, phone, email, principal, library_admin)
+            sql_query = """insert into School_Library values('{}','{}','{}','{}','{}','{}',null);""".format(address, name, city, phone, email, principal)
             cursor.execute(sql_query)
             db.commit()
             out = 'School with attributes <br>'
-            out = out + 'address={}, name={}, city={}, phone={}, email={}, principal={}, library_admin={}'.format(address, name, city, phone, email, principal, library_admin) + '<br>'
+            out = out + 'address={}, name={}, city={}, phone={}, email={}, principal={}'.format(address, name, city, phone, email, principal) + '<br>'
             out = out + 'was successfully inserted into DataBase <br>'
             return out 
         except mysql.connector.Error as err:
@@ -122,8 +132,8 @@ def insert_book_by_librarian(db, username):
     if not is_internal_request(): abort(401)
     cursor = db.cursor()
     sql = '''select School_Library.address, name 
-            from Signup_Approval, School_Library
-            where School_Library.address = Signup_Approval.address and username="{}" '''.format(username)
+            from User, School_Library
+            where School_Library.address = User.address and User.username="{}" '''.format(username)
     cursor.execute(sql)
     school = cursor.fetchall()[0]
     print(school)

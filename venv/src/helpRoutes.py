@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, url_for, flash, redirect, jso
 from flask_httpauth import HTTPBasicAuth
 import mysql.connector 
 import random
+from datetime import datetime, timedelta
 
 ## Here are functions for routes that create schema, insert into db, return something from a db 
 ## but they are not main routes of the application
@@ -87,7 +88,7 @@ def insert_user(db, f, write_dml):
             else: type = 'student'
 
             try:
-                sql_query = """insert into User values('{u}','{p}','{t}',{v},'{d}','{f}','{l}');"""
+                sql_query = """insert into User values('{u}','{p}','{t}',{v},'{d}','{f}','{l}', null);"""
                 sql = sql_query.format(u=username,p=password,t=type,v=valid,d=birth_date,f=first_name,l=last_name)
                 cursor.execute(sql)
                 db.commit()
@@ -118,13 +119,12 @@ def insert_lib(db, f, write_dml):
         else: name += 'High School'
         if lib:
             attr = lib.split(',')
-            address, city, phone, email, principal, library_admin = attr
-        
+            address, city, phone, email, principal, _ = attr
             try:
-                sql = """insert into School_Library values('{}','{}','{}','{}','{}','{}','{}');""".format(address, name, city, phone, email, principal, library_admin)
+                sql = """insert into School_Library values('{}','{}','{}','{}','{}','{}',{});""".format(address, name, city, phone, email, principal, 'null')
                 cursor.execute(sql)
                 db.commit()
-                out = out + 'address={}, name={}, city={}, phone={}, email={}, principal={}, library_admin={}'.format(address, name, city, phone, email, principal, library_admin) + '<br>'
+                out = out + 'address={}, name={}, city={}, phone={}, email={}, principal={}, library_admin={}'.format(address, name, city, phone, email, principal, 'null') + '<br>'
                 if write_dml:
                     with open(f, 'a', encoding="utf-8") as fd:
                         fd.write(sql + ';' + '\n')
@@ -149,6 +149,15 @@ def insert_signup_approval(db, f, write_dml):
             if libs_for_librarians:
                 address = libs_for_librarians[0]
                 libs_for_librarians.pop(0)
+                try:
+                    sql = f"update School_Library set username='{username}' where address='{address}'"
+                    cursor.execute(sql)
+                    db.commit()
+                except mysql.connector.Error as err:
+                    print("Something went wrong: ", err) 
+                    return "<h1>Update Error!!!</h1>"
+                # set library_admin = lib.username in table School Library
+                ############################################
             else:
                 address =  random.choice(libs)[0]
                 try: 
@@ -165,7 +174,7 @@ def insert_signup_approval(db, f, write_dml):
         else:
             address =  random.choice(libs)[0]
         try:
-            sql = "insert into Signup_Approval values('{}','{}');".format(username, address)
+            sql = "update User set address='{}' where username='{}';".format(address, username)
             cursor.execute(sql)
             db.commit()
             out = out + username + ' ' + address + '<br>'
@@ -247,24 +256,24 @@ def add_existing_book(db, address):
 
 def notValidUsers(db, lib_username):
     if not is_internal_request(): abort(401)
-    q = "select address from Signup_Approval where username='{}'".format(lib_username)
+    q = "select address from User where username='{}'".format(lib_username)
     cursor = db.cursor()
     cursor.execute(q)
     address = cursor.fetchall()[0][0]
     if address: 
-        q = "select User.username, type, address from User, Signup_Approval where User.username=Signup_Approval.username and address='{}' and valid=0 ".format(address)
+        q = "select username, type, address from User where address='{}' and valid=0 ".format(address)
         cursor.execute(q)
         notValidUsers = cursor.fetchall()
         return jsonify(notValidUsers=notValidUsers)
     
 def ValidUsers(db, lib_username, valid_bool): # call it with 1 for valid users and with 0 for not valid users
     #if not is_internal_request(): abort(401)
-    q = "select address from Signup_Approval where username='{}'".format(lib_username)
+    q = "select address from User where username='{}'".format(lib_username)
     cursor = db.cursor()
     cursor.execute(q)
     address = cursor.fetchall()[0][0]
     if address: 
-        q = "select User.username, type, address from User, Signup_Approval where User.username=Signup_Approval.username and address='{}' and valid={} and (type='teacher' or type='student') ;".format(address, valid_bool)
+        q = "select username, type, address from User where  address='{}' and valid={} and (type='teacher' or type='student') ;".format(address, valid_bool)
         cursor.execute(q)
         Users = cursor.fetchall()
         return jsonify(Users=Users)
@@ -433,3 +442,6 @@ def insert_review(db, f, write_dml):
     
     return out
 
+def insert_reservation(db, f, write_dml):
+    cursor = db.cursor()
+    

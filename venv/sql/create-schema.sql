@@ -30,6 +30,7 @@ valid boolean not null,
 birth_date date,
 first_name varchar(30),
 last_name varchar(30),
+address varchar(50),
 primary key(username)
 );
 
@@ -40,18 +41,13 @@ city varchar(30),
 phone char(10),
 email   varchar(30),
 principal  varchar(50),
-library_admin   varchar(50),
-primary key (address)
+username varchar(20) ,
+primary key (address),
+constraint  foreign key (username) references User(username) on update restrict on delete restrict
 ) ;
 
-create table Signup_Approval
-(
-    username varchar(20) not null,
-    address varchar(50) NOT NULL,
-    primary key (username),
-    constraint foreign key (username) references User(username) on update restrict on delete restrict,
-    constraint foreign key (address) references School_Library(address) on update restrict on delete restrict
-);
+alter table User 
+add constraint foreign key (address) references School_Library(address) on update restrict on delete restrict;
 
 create table Book
 (
@@ -120,6 +116,7 @@ create table Borrowing
     returned boolean,
     approval boolean,
     librarian varchar(20),
+    demand_time timestamp,
     primary key (username, address, ISBN),
     constraint foreign key (username) references User(username) on update restrict on delete restrict,
     constraint foreign key (address) references School_Library(address) on update restrict on delete restrict,

@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, url_for, flash, redirect, jso
 from flask_httpauth import HTTPBasicAuth
 import mysql.connector 
 import random
-from datetime import timedelta
+from datetime import datetime, timedelta
 from .helpRoutes import *   # this is used to import all functions from 'helpRoutes.py' 
 from .accept import *
 
@@ -39,7 +39,7 @@ users = {
 # Verify the username and password for each request
 @auth.verify_password
 def verify_password(username, password):
-    if username in users and password == users[username] or username==get_admin()[0] and password==get_admin()[1]:
+    if username in users and password == users[username]: #or username==get_admin()[0] and password==get_admin()[1]:
         return username
 
 # Add the authentication decorator to the route
@@ -169,12 +169,8 @@ def signup_form_redirect():
         if schoolExists:
             # insert into User
             try:
-                sql_query = """insert into User values('{u}', '{p}', '{t}','0','{d}','{f}','{l}')"""
-                cursor.execute(sql_query.format(u=username, p=password, t=type, d=birth_date, f=first_name, l=last_name))
-                db.commit()
-                # insert into Signup_Approval
-                sql_query = """insert into Signup_Approval values('{}','{}')""".format(username, address)
-                cursor.execute(sql_query)
+                sql_query = """insert into User values('{u}', '{p}', '{t}','0','{d}','{f}','{l}','{a}')"""
+                cursor.execute(sql_query.format(u=username, p=password, t=type, d=birth_date, f=first_name, l=last_name, a=address))
                 db.commit()
             except mysql.connector.Error as err:
                 print("Something went wrong: ", err)
@@ -239,9 +235,9 @@ def notApprovedUser(username):
     out = ''
     if type=='librarian': out += 'Wait for the admin to validate you <br>'
     else:
-        sql = '''select L.username, A.address, L.type
-                from User L, Signup_Approval S, Signup_Approval A
-                where S.username="{}" and  S.address=A.address and A.username=L.username and L.type="librarian" and L.valid=1;'''.format(username)
+        sql = '''select L.username, L.address, L.type
+                from User L, User S
+                where S.username="{}" and  S.address=L.address and L.type="librarian" and L.valid=1;'''.format(username)
         cursor.execute(sql)
         librarians = cursor.fetchall()
         
@@ -258,11 +254,11 @@ def not_approved_reviews_route():
     return notApprovedReviews(db)
 
 @app.route('/notValidLibrarians')
-@auth.login_required
 def notValidLibrarians():
+    if not is_internal_request(): abort(401)
     cursor = db.cursor()
     # find librarians that are not approved yet
-    cursor.execute("SELECT User.username, User.type, Signup_Approval.address FROM User join Signup_Approval on User.username = Signup_Approval.username where valid=0 and type='librarian';")
+    cursor.execute("SELECT username, type, address FROM User  where valid=0 and type='librarian';")
     notValidLibrarians = cursor.fetchall()
     # 
     out = 'Not valid librarians (username, password) <br>'
@@ -272,13 +268,13 @@ def notValidLibrarians():
     return jsonify(notValidLibrarians=notValidLibrarians) 
 
 @app.route('/accept-librarians', methods=['GET', 'POST'])
-@auth.login_required
 def accept_libs_route():
+    if not is_internal_request(): abort(401)
     return accept_librarians(db)
 
 @app.route('/<username>/admin')
-@auth.login_required
 def admin(username):
+    if not is_internal_request(): abort(401)
     return render_template('admin.html', username=username)
 
 @app.route("/simple-user/<type>/<username>")
@@ -307,7 +303,7 @@ def update_user_route(username):
 def librarian(username):
     if not is_internal_request(): abort(401)
     cursor = db.cursor()
-    q = "select address from Signup_Approval where username='{}'".format(username)
+    q = "select address from User where username='{}'".format(username)
     cursor.execute(q)
     address = cursor.fetchall()[0][0]
     if address:
@@ -339,7 +335,7 @@ def insert_book_by_lib(username):
 def add_existing_book_route(username):
     if not is_internal_request(): abort(401)
     cursor = db.cursor()
-    sql = "select address from Signup_Approval where username='{}'".format(username)
+    sql = "select address from User where username='{}'".format(username)
     cursor.execute(sql)
     address = cursor.fetchall()[0][0]
     return add_existing_book(db, address)
@@ -348,7 +344,7 @@ def add_existing_book_route(username):
 def update_book_route(username, ISBN):
     if not is_internal_request(): abort(401)
     cursor = db.cursor()
-    sql = "select address from Signup_Approval where username='{}'".format(username)
+    sql = "select address from User where username='{}'".format(username)
     cursor.execute(sql)
     address = cursor.fetchall()[0][0]
     return update_book(db, ISBN, address)
@@ -372,7 +368,7 @@ def accept_review_route():
 def books_in_this_school_route(username):
     if not is_internal_request(): abort(401)
     cursor = db.cursor()
-    sql = "select address from Signup_Approval where username='{}'".format(username)
+    sql = "select address from User where username='{}'".format(username)
     cursor.execute(sql)
     address = cursor.fetchall()[0][0]
     return books_in_this_school(db, address, username)
@@ -386,13 +382,13 @@ def change_password_route(username):
     return change_password(db, username)
 
 @app.route('/backup', methods = ['GET', 'POST'])
-@auth.login_required
 def backup_route():
+    if not is_internal_request(): abort(401)
     return backup(db, db_name)
 
 @app.route('/restore', methods = ['GET', 'POST'])
-@auth.login_required
 def restore_route():
+    if not is_internal_request(): abort(401)
     return restore(db, db_name)
 
 
