@@ -5,6 +5,7 @@ import random
 from datetime import datetime, timedelta
 from .helpRoutes import *   # this is used to import all functions from 'helpRoutes.py' 
 from .accept import *
+from .insert import *
 
 
 app = Flask(__name__)
@@ -97,7 +98,15 @@ def sample_route():
 def create_route():
     return create(db)
 
-# insert all and write dml script...
+# (Route /insert) In order to insert all and write dml script...
+# inserts data into User 
+# inserts data into School_Library 
+# updates all existing in the DB Users with the address of their school
+# inserts data into Book and Author, Keyword, Topic
+# inserts all the existing books in several schools ..
+# inserts reviews
+# inserts reservations ...
+ 
 @app.route("/insert")
 @auth.login_required
 def insert_route():
@@ -108,44 +117,6 @@ def insert_route():
 @auth.login_required
 def dml():
     return insert_from_dml(db)
-
-# insert data into User 
-@app.route('/insert-user')
-@auth.login_required
-def insert_user_route():
-    return insert_user(db)
-
-# insert data into School_Library 
-@app.route('/insert-lib')
-@auth.login_required
-def insert_lib_route():
-    return insert_lib(db)
-
-# insert data into Book
-@app.route('/insert-book')
-@auth.login_required
-def insert_book_route():
-    return insert_book(db)
-
-# inserts all the existing books in several schools ..
-@app.route('/insert-available')
-@auth.login_required
-def insert_available_route():
-    return insert_available(db)
-
-# inserts all existing in the DB Users to the table Signup_Approval
-# correlated by a random school
-# should be done only when Signup_Approval is empty set ! 
-# so that there will be no duplicate entry errors
-@app.route('/insert-signup-approval')
-@auth.login_required
-def insert_signup_approval_route():
-    return insert_signup_approval(db)
-
-@app.route('/insert-review')
-@auth.login_required
-def insert_review_route():
-    return insert_review(db)
 
 @app.route("/signup", methods=['GET', 'POST'])
 def signup_form_redirect():

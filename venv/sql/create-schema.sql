@@ -130,7 +130,6 @@ create table Reservation
     address varchar(50) NOT NULL,
     ISBN varchar(20) not null,
     start_date date,
-    approval boolean,
     primary key (username, address, ISBN),
     constraint foreign key (username) references User(username) on update restrict on delete restrict,
     constraint foreign key (address) references School_Library(address) on update restrict on delete restrict,
