@@ -117,7 +117,7 @@ create table Borrowing
     approval boolean,
     librarian varchar(20),
     demand_time timestamp,
-    primary key (username, address, ISBN),
+    primary key (username, address, ISBN, demand_time),
     constraint foreign key (username) references User(username) on update restrict on delete restrict,
     constraint foreign key (address) references School_Library(address) on update restrict on delete restrict,
     constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict,
@@ -135,3 +135,25 @@ create table Reservation
     constraint foreign key (address) references School_Library(address) on update restrict on delete restrict,
     constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict
 );
+
+DELIMITER ;;
+
+CREATE TRIGGER `borrow` AFTER INSERT ON `Borrowing` FOR EACH ROW BEGIN
+    if new.approval=1 then 
+        UPDATE Available A SET books_number=books_number - 1 where A.ISBN=new.ISBN and A.address=new.address;
+    end if;
+  END;;
+CREATE TRIGGER `borrow_update` AFTER UPDATE ON `Borrowing` FOR EACH ROW
+BEGIN
+    IF NEW.approval = 1 AND OLD.approval <> 1 THEN 
+        UPDATE Available A
+        SET A.books_number = A.books_number - 1
+        WHERE A.ISBN = NEW.ISBN AND A.address = NEW.address;
+    ELSEIF NEW.approval = 1 AND OLD.approval = 1 AND NEW.returned = 1 AND OLD.returned = 0 THEN
+        UPDATE Available A
+        SET A.books_number = A.books_number + 1
+        WHERE A.ISBN = NEW.ISBN AND A.address = NEW.address;
+    end if;
+end;;
+
+DELIMITER ;

@@ -12,11 +12,28 @@ def sample():
     return render_template('sample-page.html')
 
 def create(db):
-
+    
     fd = open('venv\\sql\\create-schema.sql', 'r', encoding="utf-8")
     sqlFile = fd.read()
     fd.close()
 
+    # this does not work currently ...
+    cursor = db.cursor()
+    try:
+        cursor.execute(sqlFile, multi=True)
+        # Consume the result of the multi-statement query
+        for _ in cursor.fetchall():
+            pass
+        db.commit()
+        print("Database creation successful!")
+    except mysql.connector.Error as error:
+        print(f"Error creating database: {error}")
+        db.rollback()
+    finally:
+        cursor.close()
+
+    # this creates database but not triggers...
+    '''
     sqlCommands = sqlFile.split(';')
 
     for command in sqlCommands:
@@ -29,8 +46,8 @@ def create(db):
         except mysql.connector.Error as err:
             print("Something went wrong: ", err)
             
-        
-    return 'creates a db and a table inside'
+    '''
+    return 'creates the DataBase from the sql script'
 
 def get_schools_list(db):
     cursor = db.cursor()

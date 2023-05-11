@@ -3,7 +3,7 @@ from flask_httpauth import HTTPBasicAuth
 import mysql.connector 
 import random
 from .helpRoutes import is_internal_request
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, time
 
 def insert(db):
     write_dml = True
@@ -11,17 +11,6 @@ def insert(db):
     if write_dml:
         with open(f, 'w', encoding="utf-8") as fd: 
             fd.write("") # clear dml file
-    '''
-    out = ''
-    out += insert_user(db, f, write_dml) 
-    out += insert_lib(db, f, write_dml) 
-    out += insert_signup_approval(db, f, write_dml) 
-    out += insert_book(db, f, write_dml) 
-    out += insert_available(db, f, write_dml) 
-    out += insert_review(db, f, write_dml) 
-    out += insert_reservation(db, f, write_dml)
-    return out
-    '''
 
     return  insert_user(db, f, write_dml) \
      + insert_lib(db, f, write_dml) \
@@ -29,7 +18,8 @@ def insert(db):
      + insert_book(db, f, write_dml) \
      + insert_available(db, f, write_dml) \
      + insert_review(db, f, write_dml) \
-     + insert_reservation(db, f, write_dml) 
+     + insert_reservation(db, f, write_dml) \
+     + insert_borrowing(db, f, write_dml)
 
 def insert_from_dml(db):
     fd = open('venv\\sql\\insert-schema.sql', 'r', encoding="utf-8")
@@ -375,6 +365,8 @@ def insert_borrowing(db, f, write_dml):
     cursor.execute(sql)
     users = cursor.fetchall()
     out = ''
+    current_datetime = datetime.now()
+    today = date.today()
     for user in users:
         username, address, type = user
         if random.randint(1,100) < 90:
@@ -386,14 +378,39 @@ def insert_borrowing(db, f, write_dml):
                 for i in range(x):
                     if len(books)<2: break
                     ISBN, books_number = books[i]
-                    # Get today's date
-                    today = date.today()
-                    # Calculate the date 3000 days ago
-                    week_ago = today - timedelta(days=3000) 
-                    # Generate a random number between 0 and 2999
-                    rand_num = random.randint(0, 2999)
-                    # Calculate the random date from past 3000 days until now
-                    start_date = week_ago + timedelta(days=rand_num)
-                    
-
+                    ### Find a random demand_time
+                    past_datetime = current_datetime - timedelta(days=3000)
+                    random_timedelta = random.uniform(0, (current_datetime - past_datetime).total_seconds())
+                    random_datetime = past_datetime + timedelta(seconds=random_timedelta) # this is demand_time
+                    demand_date = random_datetime.date()
+                    ## compute a random start date between demand date and now
+                    time_only = time(12, 0, 0)
+                    start_timestamp = datetime.combine(demand_date, time_only)
+                    end_timestamp = datetime.combine(today, time_only)
+                    random_timestamp = random.uniform(start_timestamp, end_timestamp)
+                    start_date = random_timestamp.date()
+                    returned = random.randint(0,1)
+                    sql = f"select * from User where type='librarian' and valid=1 and address='{address}'"
+                    cursor.execute(sql)
+                    libs = cursor.fetchall()
+                    if libs:
+                        librarian = libs[0][0]
+                        try:
+                            if random.randint(1,100)<20: # not approved borrowings are only the 20%
+                                approval = 0
+                                sql = f"insert into Borrowing values('{username}','{address}','{ISBN}',null,null,0,null,'{random_datetime}')"
+                            else:
+                                approval = 1
+                                sql = f"insert into Borrowing values('{username}','{address}','{ISBN}','{start_date}',{returned}, 1, '{librarian}','{random_datetime}')"
+                            cursor.execute(sql)
+                            db.commit()
+                            if not approval:
+                                out += f"username= {username}, address= {address}, ISBN= {ISBN},<br> start_date=null , returned=null , approval=0 , librarian=null , demand_time={random_datetime} <br><br>"
+                            else:
+                                out += f"username= {username}, address= {address}, ISBN= {ISBN},<br> start_date= {start_date} , returned= {returned} , approval=1 , librarian={librarian} , demand_time={random_datetime} <br><br>"
+                            if write_dml:
+                                with open(f, 'a', encoding="utf-8") as fd:
+                                    fd.write(sql + ';' + '\n')
+                        except mysql.connector.Error as err:
+                            print("Something went wrong: ", err)                   
     return out
