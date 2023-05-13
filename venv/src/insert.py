@@ -18,8 +18,8 @@ def insert(db):
      + insert_book(db, f, write_dml) \
      + insert_available(db, f, write_dml) \
      + insert_review(db, f, write_dml) \
-     + insert_reservation(db, f, write_dml) \
-     + insert_borrowing(db, f, write_dml)
+     + insert_borrowing(db, f, write_dml) \
+     + insert_reservation(db, f, write_dml) 
 
 def insert_from_dml(db):
     fd = open('venv\\sql\\insert-schema.sql', 'r', encoding="utf-8")
@@ -268,7 +268,6 @@ def insert_available(db, f, write_dml):
     cursor.execute("SELECT name, address FROM School_Library")
     out =''
     addresses = [ s[1] for s in cursor.fetchall() ]
-    print(addresses)
     for book in books:
         for i in range(random.randint(3,5)): # a book can be inserted in 3 to 5 different schools
             try:
@@ -333,7 +332,6 @@ def insert_reservation(db, f, write_dml):
             sql = f"select B.ISBN from Book B, Available A  where B.ISBN=A.ISBN and address='{address}' and books_number=0"
             cursor.execute(sql)
             books = cursor.fetchall()
-            print(books)
             if books:
                 x = 1 if type=='teacher' else random.randint(1,2) # 1 reservation to teachers per week , up to 2 for students
                 for i in range(x):
@@ -354,7 +352,6 @@ def insert_reservation(db, f, write_dml):
                         if write_dml:
                             with open(f, 'a', encoding="utf-8") as fd:
                                 fd.write(sql + ';' + '\n')
-                        print("ok")
                     except mysql.connector.Error as err:
                         print("Something went wrong: ", err)
     return out
@@ -369,32 +366,36 @@ def insert_borrowing(db, f, write_dml):
     today = date.today()
     for user in users:
         username, address, type = user
-        if random.randint(1,100) < 90:
+        if random.randint(1,100) < 60:
             sql = f"select B.ISBN, books_number from Book B, Available A  where B.ISBN=A.ISBN and address='{address}' and books_number>0"
             cursor.execute(sql)
             books = cursor.fetchall()
-            if books:
-                x = 1 if type=='teacher' else random.randint(1,2) # 1 borrowing to teachers per week , up to 2 for students
+            sql = f"select * from User where type='librarian' and valid=1 and address='{address}'"
+            cursor.execute(sql)
+            libs = cursor.fetchall()
+            if books and libs:
+                librarian = libs[0][0]
+                x = 1 if type=='teacher' else random.randint(1,2) 
                 for i in range(x):
                     if len(books)<2: break
                     ISBN, books_number = books[i]
-                    ### Find a random demand_time
-                    past_datetime = current_datetime - timedelta(days=3000)
-                    random_timedelta = random.uniform(0, (current_datetime - past_datetime).total_seconds())
-                    random_datetime = past_datetime + timedelta(seconds=random_timedelta) # this is demand_time
-                    demand_date = random_datetime.date()
-                    ## compute a random start date between demand date and now
-                    time_only = time(12, 0, 0)
-                    start_timestamp = datetime.combine(demand_date, time_only)
-                    end_timestamp = datetime.combine(today, time_only)
-                    random_timestamp = random.uniform(start_timestamp, end_timestamp)
-                    start_date = random_timestamp.date()
-                    returned = random.randint(0,1)
-                    sql = f"select * from User where type='librarian' and valid=1 and address='{address}'"
-                    cursor.execute(sql)
-                    libs = cursor.fetchall()
-                    if libs:
-                        librarian = libs[0][0]
+                    for i in range(5):
+                        ### Find a random demand_time
+                        past_datetime = current_datetime - timedelta(days=3000)
+                        random_timedelta = random.uniform(0, (current_datetime - past_datetime).total_seconds())
+                        random_datetime = past_datetime + timedelta(seconds=random_timedelta) # this is demand_time
+                        demand_date = random_datetime.date()
+                        ## compute a random start date between demand date and now
+                        time_only = time(12, 0, 0)
+                        start_timestamp = datetime.combine(demand_date, time_only)
+                        end_timestamp = datetime.combine(today, time_only)
+                        random_timestamp = random.uniform(start_timestamp, end_timestamp)
+                        start_date = random_timestamp.date()
+                        # prob is the probability that the book has been returned
+                        if start_date < date(2023, 5, 1): prob = 98 
+                        elif  start_date < date(2023, 5, 14): prob = 70
+                        else: prob = 30
+                        returned = 1 if random.randint(1,100)<prob else 0
                         try:
                             if random.randint(1,100)<20: # not approved borrowings are only the 20%
                                 approval = 0

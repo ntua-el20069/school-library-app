@@ -143,6 +143,7 @@ CREATE TRIGGER `borrow` AFTER INSERT ON `Borrowing` FOR EACH ROW BEGIN
         UPDATE Available A SET books_number=books_number - 1 where A.ISBN=new.ISBN and A.address=new.address;
     end if;
   END;;
+
 CREATE TRIGGER `borrow_update` AFTER UPDATE ON `Borrowing` FOR EACH ROW
 BEGIN
     IF NEW.approval = 1 AND OLD.approval <> 1 THEN 
@@ -155,5 +156,44 @@ BEGIN
         WHERE A.ISBN = NEW.ISBN AND A.address = NEW.address;
     end if;
 end;;
+
+CREATE TRIGGER `reserve` AFTER INSERT ON `Reservation` FOR EACH ROW BEGIN
+    declare res_type varchar(20);
+    declare res_num int;
+    declare delayed_and_not_returned int;
+    declare borrowed int;
+    select type into res_type from User where username = NEW.username;
+    select count(*) into res_num from Reservation where username = NEW.username;
+    select count(*) into delayed_and_not_returned from Borrowing where username = NEW.username and approval=1 and returned=0 and DATE_ADD(start_date, INTERVAL 7 DAY) < CURDATE();
+    select count(*) into borrowed from Borrowing where username = NEW.username and address = NEW.address and ISBN = NEW.ISBN and approval=1 and returned=0;
+    if (res_type='student' and res_num >= 3) then
+        SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Insertion is not allowed (students can reserve only 2 books per week).';
+    end if;
+    if (res_type='teacher' and res_num >= 2) then
+        SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Insertion is not allowed (teachers can reserve only 1 book per week).';
+    end if;
+    if (delayed_and_not_returned > 0) then
+        SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Insertion is not allowed (when there are delayed not returned books).';       
+    end if;    
+    if (borrowed > 0) then
+        SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Insertion is not allowed (this user has borrowed this book).';       
+    end if; 
+  END;;
+
+CREATE PROCEDURE DeletePastReservations()
+BEGIN
+    DELETE FROM Reservation where DATE_SUB(CURDATE(), INTERVAL 7 DAY) > start_date;
+END;;
+
+-- prefix p_ is used for parameters 
+CREATE PROCEDURE DeleteReservation(IN p_username VARCHAR(20), IN p_address varchar(50), IN p_ISBN VARCHAR(20))
+BEGIN
+    DELETE FROM Reservation WHERE username = p_username AND address = p_address AND ISBN = p_ISBN;
+END;;
+
 
 DELIMITER ;
