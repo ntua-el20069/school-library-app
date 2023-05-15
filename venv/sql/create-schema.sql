@@ -34,6 +34,9 @@ address varchar(50),
 primary key(username)
 );
 
+create index index_first on User (first_name);
+create index index_last on User (last_name);
+
 create table School_Library
 (address varchar(50) NOT NULL,
 name varchar(50),
@@ -132,6 +135,8 @@ create table Borrowing
     constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict,
     constraint foreign key (librarian) references User(username) on update restrict on delete restrict
 );
+
+create index index_start on Borrowing (start_date);
 
 create table Reservation
 (
