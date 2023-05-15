@@ -180,6 +180,19 @@ create view borrowing_available as
 (select username, A.address as address, A.ISBN as ISBN, start_date, returned, librarian, books_number 
 from Borrowing B, Available A  where A.ISBN=B.ISBN and A.address=B.address);
 
+create view delayed_not_returned as
+(select *  from Borrowing where returned=0 and DATE_ADD(start_date, INTERVAL 7 DAY) < CURDATE());
+
+create view reservation_user_book as
+(select R.username as username, R.address as address, R.ISBN as ISBN , start_date, first_name, last_name, type, title
+from Reservation R, User U, Book B
+where R.username=U.username and R.ISBN=B.ISBN);
+
+create view borrowing_user_book as
+(select bor.username as username, bor.address as address, bor.ISBN as ISBN , start_date, first_name, last_name, type, title, returned, librarian
+from Borrowing bor, User U, Book B
+where bor.username=U.username and bor.ISBN=B.ISBN);
+
 -- 4.1.7 (Administrator question) 
 -- Find all authors who have written at least 5 books less than the author with the most books.
 create view frequent_authors as 

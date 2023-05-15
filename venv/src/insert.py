@@ -375,11 +375,12 @@ def insert_borrowing(db, f, write_dml):
             libs = cursor.fetchall()
             if books and libs:
                 librarian = libs[0][0]
-                x = 1 if type=='teacher' else random.randint(1,2) 
+                x = random.randint(2,3) 
                 for i in range(x):
-                    if len(books)<2: break
-                    ISBN, books_number = books[i]
-                    for i in range(random.randint(3,4)):
+                    if len(books)<3: break
+                    ISBN, books_number = books[random.randint(1,100) % len(books)]
+                    books.pop()
+                    for i in range(random.randint(1,3)):
                         #  at least 70% of the borrowings are the last 100 days
                         days_before = 100 if random.randint(1,100)<70 else 3000
                         ## compute a random start_date between demand past_date and now

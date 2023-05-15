@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 from .helpRoutes import *   # this is used to import all functions from 'helpRoutes.py' 
 from .accept import *
 from .insert import *
+from .borrow_reserve import *
+from .user_questions import *
 
 
 app = Flask(__name__)
@@ -253,6 +255,11 @@ def simple_user(type, username):
     if not is_internal_request(): abort(401)
     return render_template('simple-user.html', type=type, username=username)
 
+@app.route("/simple-user/<type>/<username>/books-borrowed")
+def books_borrowed_route(type, username):
+    if not is_internal_request(): abort(401)
+    return books_borrowed(db, username)
+
 @app.route("/simple-user/<type>/<username>/card")
 def simple_user_card(type, username):
     if not is_internal_request(): abort(401)
@@ -279,6 +286,30 @@ def librarian(username):
     address = cursor.fetchall()[0][0]
     if address:
         return render_template("librarian.html", username=username, address=address)
+    else:
+        return 'An error occured!'
+
+@app.route("/librarian/<username>/all-borrowings")
+def all_borrowings_lib_route(username):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    q = "select address from User where username='{}'".format(username)
+    cursor.execute(q)
+    address = cursor.fetchall()[0][0]
+    if address:
+        return all_borrowings_lib(db, username, address)
+    else:
+        return 'An error occured!'
+
+@app.route("/librarian/<username>/all-reservations")
+def all_reservations_lib_route(username):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    q = "select address from User where username='{}'".format(username)
+    cursor.execute(q)
+    address = cursor.fetchall()[0][0]
+    if address:
+        return all_reservations_lib(db, username, address)
     else:
         return 'An error occured!'
 
