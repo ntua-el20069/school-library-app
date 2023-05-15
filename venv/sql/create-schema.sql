@@ -60,6 +60,7 @@ create table Book
     summary varchar(1000),
     primary key (ISBN)
 );
+CREATE INDEX index_title ON Book (title);
 
 create table Available
 (
@@ -71,6 +72,8 @@ create table Available
     constraint foreign key (address) references School_Library(address) on update restrict on delete restrict
 );
 
+CREATE INDEX index_books_number ON Available (books_number);
+
 create table Author
 (
     ISBN varchar(20) not null,
@@ -79,6 +82,8 @@ create table Author
     constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict
 );
 
+CREATE INDEX index_author ON Author (name);
+
 create table Topic 
 (
     ISBN varchar(20) not null,
@@ -86,6 +91,8 @@ create table Topic
     primary key (ISBN, topic),
     constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict
 );
+
+CREATE INDEX index_topic ON Topic (topic);
 
 create table Keyword
 (
@@ -106,6 +113,8 @@ create table Review
     constraint foreign key (username) references User(username) on update restrict on delete restrict,
     constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict
 );
+
+CREATE INDEX index_review ON Review (username);
 
 create table Borrowing
 (
@@ -136,26 +145,97 @@ create table Reservation
     constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict
 );
 
+create view reservation_numbers as 
+(select username, address, count(*) as number from Reservation group by username, address);
+
+create view borrowing_numbers as 
+(select username, address, returned, approval, count(*) as number from Borrowing group by username, address, returned, approval);
+
+create view unavailable_books as
+(select ISBN, address, books_number from Available where books_number=0);
+
+create view new_teachers as
+(select * from User where type='teacher' and birth_date > DATE_SUB(CURDATE(), INTERVAL 40 YEAR));
+
+create view author_num_books as
+(select name, count(*) as books_written from Author group by name);
+
+create view max_books_written as
+(select max(books_written) from author_num_books);
+
+create view review_book_topic as
+(select username, B.ISBN, topic, likert from review R, book B, topic T  where R.ISBN=B.ISBN and B.ISBN=T.ISBN);
+
+create view this_year_borrowings as 
+(select * from Borrowing where approval=1 and start_date > DATE_SUB(CURDATE(), INTERVAL 1 YEAR));
+
+-- 4.1.7 (Administrator question) 
+-- Find all authors who have written at least 5 books less than the author with the most books.
+create view frequent_authors as 
+(select * from author_num_books where books_written >= (select * from max_books_written) - 5);
+
+-- 4.2.3 (Librarian-Operator question)
+-- Average Ratings per borrower and category (Search criteria: user/category)
+-- per borrower:
+create view avg_borrower_rating as 
+(select username, avg(likert) as avg_likert from Review group by username);
+-- per category-topic:
+create view avg_category_rating as
+(select topic, avg(likert) as avg_likert from review_book_topic group by topic);
+
 DELIMITER ;;
 
 CREATE TRIGGER `borrow` AFTER INSERT ON `Borrowing` FOR EACH ROW BEGIN
-    if new.approval=1 then 
+    declare books int;
+    declare bor_num int;
+    declare bor_type varchar(20);
+    select books_number into books from Available A where A.ISBN=new.ISBN and A.address=new.address;
+    select count(*) into bor_num from Borrowing where username = NEW.username and approval=1 and DATE_SUB(CURDATE(), INTERVAL 7 DAY) < start_date;
+    select type into bor_type from User where username = NEW.username;
+    if (bor_type='student' and bor_num >= 3) then
+        SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Borrowing is not allowed (students can borrow only 2 books per week).';
+    ELSEIF (bor_type='teacher' and bor_num >= 2) then
+        SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Borrowing is not allowed (teachers can borrow only 1 books per week).';
+    end if;
+    IF books=0 then
+        SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Borrowing is not allowed (book is not available).';
+    ELSEIF new.approval=1 and books>0 then 
         UPDATE Available A SET books_number=books_number - 1 where A.ISBN=new.ISBN and A.address=new.address;
+    
     end if;
   END;;
 
-CREATE TRIGGER `borrow_update` AFTER UPDATE ON `Borrowing` FOR EACH ROW
-BEGIN
-    IF NEW.approval = 1 AND OLD.approval <> 1 THEN 
+CREATE TRIGGER `borrow_update` AFTER UPDATE ON `Borrowing` FOR EACH ROW BEGIN
+    declare books int;
+    declare bor_num int;
+    declare bor_type varchar(20);
+    select books_number into books from Available A where A.ISBN=new.ISBN and A.address=new.address;
+    select count(*) into bor_num from Borrowing where username = NEW.username and approval=1 and DATE_SUB(CURDATE(), INTERVAL 7 DAY) < start_date;
+    select type into bor_type from User where username = NEW.username;
+    if (bor_type='student' and bor_num >= 3) then
+        SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Borrowing is not allowed (students can borrow only 2 books per week).';
+    ELSEIF (bor_type='teacher' and bor_num >= 2) then
+        SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Borrowing is not allowed (teachers can borrow only 1 books per week).';
+    end if;
+    if books = 0 and NEW.approval = 1 AND OLD.approval <> 1 then
+        SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Borrowing is not allowed (book is not available).';
+    end if;
+    IF NEW.approval = 1 AND OLD.approval <> 1  THEN 
         UPDATE Available A
         SET A.books_number = A.books_number - 1
-        WHERE A.ISBN = NEW.ISBN AND A.address = NEW.address;
+        WHERE A.ISBN = NEW.ISBN AND A.address = NEW.address; 
     ELSEIF NEW.approval = 1 AND OLD.approval = 1 AND NEW.returned = 1 AND OLD.returned = 0 THEN
         UPDATE Available A
         SET A.books_number = A.books_number + 1
         WHERE A.ISBN = NEW.ISBN AND A.address = NEW.address;
     end if;
-end;;
+  end;;
 
 CREATE TRIGGER `reserve` AFTER INSERT ON `Reservation` FOR EACH ROW BEGIN
     declare res_type varchar(20);
@@ -168,32 +248,30 @@ CREATE TRIGGER `reserve` AFTER INSERT ON `Reservation` FOR EACH ROW BEGIN
     select count(*) into borrowed from Borrowing where username = NEW.username and address = NEW.address and ISBN = NEW.ISBN and approval=1 and returned=0;
     if (res_type='student' and res_num >= 3) then
         SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Insertion is not allowed (students can reserve only 2 books per week).';
+            SET MESSAGE_TEXT = 'Reservation is not allowed (students can reserve only 2 books per week).';
     end if;
     if (res_type='teacher' and res_num >= 2) then
         SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Insertion is not allowed (teachers can reserve only 1 book per week).';
+            SET MESSAGE_TEXT = 'Reservation is not allowed (teachers can reserve only 1 book per week).';
     end if;
     if (delayed_and_not_returned > 0) then
         SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Insertion is not allowed (when there are delayed not returned books).';       
+            SET MESSAGE_TEXT = 'Reservation is not allowed (when there are delayed not returned books).';       
     end if;    
     if (borrowed > 0) then
         SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Insertion is not allowed (this user has borrowed this book).';       
+            SET MESSAGE_TEXT = 'Reservation is not allowed (this user has borrowed this book).';       
     end if; 
   END;;
 
-CREATE PROCEDURE DeletePastReservations()
-BEGIN
+CREATE PROCEDURE DeletePastReservations() BEGIN
     DELETE FROM Reservation where DATE_SUB(CURDATE(), INTERVAL 7 DAY) > start_date;
-END;;
+ END;;
 
 -- prefix p_ is used for parameters 
-CREATE PROCEDURE DeleteReservation(IN p_username VARCHAR(20), IN p_address varchar(50), IN p_ISBN VARCHAR(20))
-BEGIN
+CREATE PROCEDURE DeleteReservation(IN p_username VARCHAR(20), IN p_address varchar(50), IN p_ISBN VARCHAR(20)) BEGIN
     DELETE FROM Reservation WHERE username = p_username AND address = p_address AND ISBN = p_ISBN;
-END;;
+ END;;
 
 
 DELIMITER ;

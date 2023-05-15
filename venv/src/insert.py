@@ -367,7 +367,7 @@ def insert_borrowing(db, f, write_dml):
     for user in users:
         username, address, type = user
         if random.randint(1,100) < 60:
-            sql = f"select B.ISBN, books_number from Book B, Available A  where B.ISBN=A.ISBN and address='{address}' and books_number>0"
+            sql = f"select B.ISBN, books_number from Book B, Available A  where B.ISBN=A.ISBN and address='{address}' and books_number>=0" # I use >= 0 to check the trigger insert on borrowing
             cursor.execute(sql)
             books = cursor.fetchall()
             sql = f"select * from User where type='librarian' and valid=1 and address='{address}'"
