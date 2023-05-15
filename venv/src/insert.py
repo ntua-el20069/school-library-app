@@ -273,7 +273,7 @@ def insert_available(db, f, write_dml):
             try:
                 # there can be 0 to 30 copies of a book
                 address = random.choice(addresses)
-                copies = 0 if random.randint(1,100) < 35 else random.randint(1,30) # Prob[a book is not available] = 0.35
+                copies = 0 if random.randint(1,100) < 20 else random.randint(1,30) # Prob[a book is not available] = 0.20
                 sql = '''insert into Available values ("{}","{}",{})'''.format(book[0], address, copies) 
                 cursor.execute(sql)
                 db.commit()
@@ -329,7 +329,7 @@ def insert_reservation(db, f, write_dml):
     for user in users:
         username, address, type = user
         if random.randint(1,100) < 90:
-            sql = f"select B.ISBN from Book B, Available A  where B.ISBN=A.ISBN and address='{address}' and books_number=0"
+            sql = f"select B.ISBN from Book B, Available A  where B.ISBN=A.ISBN and address='{address}' and books_number>=0" # reservations are for both available and unavailable books
             cursor.execute(sql)
             books = cursor.fetchall()
             if books:
@@ -366,7 +366,7 @@ def insert_borrowing(db, f, write_dml):
     today = date.today()
     for user in users:
         username, address, type = user
-        if random.randint(1,100) < 60:
+        if random.randint(1,100) < 60: # prob[a user has borrowed from library at least one time] = 0.60
             sql = f"select B.ISBN, books_number from Book B, Available A  where B.ISBN=A.ISBN and address='{address}' and books_number>=0" # I use >= 0 to check the trigger insert on borrowing
             cursor.execute(sql)
             books = cursor.fetchall()
@@ -379,15 +379,13 @@ def insert_borrowing(db, f, write_dml):
                 for i in range(x):
                     if len(books)<2: break
                     ISBN, books_number = books[i]
-                    for i in range(5):
-                        ### Find a random demand_time
-                        past_datetime = current_datetime - timedelta(days=3000)
-                        random_timedelta = random.uniform(0, (current_datetime - past_datetime).total_seconds())
-                        random_datetime = past_datetime + timedelta(seconds=random_timedelta) # this is demand_time
-                        demand_date = random_datetime.date()
-                        ## compute a random start date between demand date and now
+                    for i in range(random.randint(3,4)):
+                        #  at least 70% of the borrowings are the last 100 days
+                        days_before = 100 if random.randint(1,100)<70 else 3000
+                        ## compute a random start_date between demand past_date and now
+                        past_date = today - timedelta(days=days_before)
                         time_only = time(12, 0, 0)
-                        start_timestamp = datetime.combine(demand_date, time_only)
+                        start_timestamp = datetime.combine(past_date, time_only)
                         end_timestamp = datetime.combine(today, time_only)
                         random_timestamp = random.uniform(start_timestamp, end_timestamp)
                         start_date = random_timestamp.date()
@@ -397,18 +395,10 @@ def insert_borrowing(db, f, write_dml):
                         else: prob = 30
                         returned = 1 if random.randint(1,100)<prob else 0
                         try:
-                            if random.randint(1,100)<20: # not approved borrowings are only the 20%
-                                approval = 0
-                                sql = f"insert into Borrowing values('{username}','{address}','{ISBN}',null,null,0,null,'{random_datetime}')"
-                            else:
-                                approval = 1
-                                sql = f"insert into Borrowing values('{username}','{address}','{ISBN}','{start_date}',{returned}, 1, '{librarian}','{random_datetime}')"
+                            sql = f"insert into Borrowing values('{username}','{address}','{ISBN}','{start_date}',{returned}, '{librarian}')"
                             cursor.execute(sql)
                             db.commit()
-                            if not approval:
-                                out += f"username= {username}, address= {address}, ISBN= {ISBN},<br> start_date=null , returned=null , approval=0 , librarian=null , demand_time={random_datetime} <br><br>"
-                            else:
-                                out += f"username= {username}, address= {address}, ISBN= {ISBN},<br> start_date= {start_date} , returned= {returned} , approval=1 , librarian={librarian} , demand_time={random_datetime} <br><br>"
+                            out += f"username= {username}, address= {address}, ISBN= {ISBN},<br> start_date= {start_date} , returned= {returned} , librarian={librarian} <br><br>"
                             if write_dml:
                                 with open(f, 'a', encoding="utf-8") as fd:
                                     fd.write(sql + ';' + '\n')

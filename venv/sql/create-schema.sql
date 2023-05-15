@@ -126,10 +126,8 @@ create table Borrowing
     ISBN varchar(20) not null,
     start_date date,
     returned boolean,
-    approval boolean,
     librarian varchar(20),
-    demand_time timestamp,
-    primary key (username, address, ISBN, demand_time),
+    primary key (username, address, ISBN, start_date),
     constraint foreign key (username) references User(username) on update restrict on delete restrict,
     constraint foreign key (address) references School_Library(address) on update restrict on delete restrict,
     constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict,
@@ -154,7 +152,7 @@ create view reservation_numbers as
 (select username, address, count(*) as number from Reservation group by username, address);
 
 create view borrowing_numbers as 
-(select username, address, returned, approval, count(*) as number from Borrowing group by username, address, returned, approval);
+(select username, address, returned,  count(*) as number from Borrowing group by username, address, returned);
 
 create view unavailable_books as
 (select ISBN, address, books_number from Available where books_number=0);
@@ -172,7 +170,15 @@ create view review_book_topic as
 (select username, B.ISBN, topic, likert from review R, book B, topic T  where R.ISBN=B.ISBN and B.ISBN=T.ISBN);
 
 create view this_year_borrowings as 
-(select * from Borrowing where approval=1 and start_date > DATE_SUB(CURDATE(), INTERVAL 1 YEAR));
+(select * from Borrowing where start_date > DATE_SUB(CURDATE(), INTERVAL 1 YEAR));
+
+create view reservation_available as
+(select username, A.address as address, A.ISBN as ISBN, start_date, books_number 
+from Reservation R, Available A  where A.ISBN=R.ISBN and A.address=R.address);
+
+create view borrowing_available as
+(select username, A.address as address, A.ISBN as ISBN, start_date, returned, librarian, books_number 
+from Borrowing B, Available A  where A.ISBN=B.ISBN and A.address=B.address);
 
 -- 4.1.7 (Administrator question) 
 -- Find all authors who have written at least 5 books less than the author with the most books.
@@ -195,47 +201,26 @@ CREATE TRIGGER `borrow` AFTER INSERT ON `Borrowing` FOR EACH ROW BEGIN
     declare bor_num int;
     declare bor_type varchar(20);
     select books_number into books from Available A where A.ISBN=new.ISBN and A.address=new.address;
-    select count(*) into bor_num from Borrowing where username = NEW.username and approval=1 and DATE_SUB(CURDATE(), INTERVAL 7 DAY) < start_date;
+    select count(*) into bor_num from Borrowing where username = NEW.username and DATE_SUB(CURDATE(), INTERVAL 7 DAY) < start_date;
     select type into bor_type from User where username = NEW.username;
-    if (bor_type='student' and bor_num >= 3) then
+    IF books=0 then
+        -- ??? here I should insert it into Reservation ? no use try-except in Python .. and insert to Reservation
+        SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Borrowing is not allowed (book is not available).';
+    ELSEIF (bor_type='student' and bor_num >= 3) then
         SIGNAL SQLSTATE '45000' 
             SET MESSAGE_TEXT = 'Borrowing is not allowed (students can borrow only 2 books per week).';
     ELSEIF (bor_type='teacher' and bor_num >= 2) then
         SIGNAL SQLSTATE '45000' 
             SET MESSAGE_TEXT = 'Borrowing is not allowed (teachers can borrow only 1 books per week).';
-    end if;
-    IF books=0 then
-        SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Borrowing is not allowed (book is not available).';
-    ELSEIF new.approval=1 and books>0 then 
+    ELSEIF books>0 and new.returned=0 then 
         UPDATE Available A SET books_number=books_number - 1 where A.ISBN=new.ISBN and A.address=new.address;
-    
     end if;
   END;;
 
 CREATE TRIGGER `borrow_update` AFTER UPDATE ON `Borrowing` FOR EACH ROW BEGIN
-    declare books int;
-    declare bor_num int;
-    declare bor_type varchar(20);
-    select books_number into books from Available A where A.ISBN=new.ISBN and A.address=new.address;
-    select count(*) into bor_num from Borrowing where username = NEW.username and approval=1 and DATE_SUB(CURDATE(), INTERVAL 7 DAY) < start_date;
-    select type into bor_type from User where username = NEW.username;
-    if (bor_type='student' and bor_num >= 3) then
-        SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Borrowing is not allowed (students can borrow only 2 books per week).';
-    ELSEIF (bor_type='teacher' and bor_num >= 2) then
-        SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Borrowing is not allowed (teachers can borrow only 1 books per week).';
-    end if;
-    if books = 0 and NEW.approval = 1 AND OLD.approval <> 1 then
-        SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Borrowing is not allowed (book is not available).';
-    end if;
-    IF NEW.approval = 1 AND OLD.approval <> 1  THEN 
-        UPDATE Available A
-        SET A.books_number = A.books_number - 1
-        WHERE A.ISBN = NEW.ISBN AND A.address = NEW.address; 
-    ELSEIF NEW.approval = 1 AND OLD.approval = 1 AND NEW.returned = 1 AND OLD.returned = 0 THEN
+    IF NEW.returned = 1 AND OLD.returned = 0 THEN
+        -- the book was returned so increment the books_number for this (ISBN, address) in Available
         UPDATE Available A
         SET A.books_number = A.books_number + 1
         WHERE A.ISBN = NEW.ISBN AND A.address = NEW.address;
@@ -249,21 +234,18 @@ CREATE TRIGGER `reserve` AFTER INSERT ON `Reservation` FOR EACH ROW BEGIN
     declare borrowed int;
     select type into res_type from User where username = NEW.username;
     select count(*) into res_num from Reservation where username = NEW.username;
-    select count(*) into delayed_and_not_returned from Borrowing where username = NEW.username and approval=1 and returned=0 and DATE_ADD(start_date, INTERVAL 7 DAY) < CURDATE();
-    select count(*) into borrowed from Borrowing where username = NEW.username and address = NEW.address and ISBN = NEW.ISBN and approval=1 and returned=0;
+    select count(*) into delayed_and_not_returned from Borrowing where username = NEW.username and returned=0 and DATE_ADD(start_date, INTERVAL 7 DAY) < CURDATE();
+    select count(*) into borrowed from Borrowing where username = NEW.username and address = NEW.address and ISBN = NEW.ISBN  and returned=0;
     if (res_type='student' and res_num >= 3) then
         SIGNAL SQLSTATE '45000' 
             SET MESSAGE_TEXT = 'Reservation is not allowed (students can reserve only 2 books per week).';
-    end if;
-    if (res_type='teacher' and res_num >= 2) then
+    elseif (res_type='teacher' and res_num >= 2) then
         SIGNAL SQLSTATE '45000' 
             SET MESSAGE_TEXT = 'Reservation is not allowed (teachers can reserve only 1 book per week).';
-    end if;
-    if (delayed_and_not_returned > 0) then
+    elseif (delayed_and_not_returned > 0) then
         SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Reservation is not allowed (when there are delayed not returned books).';       
-    end if;    
-    if (borrowed > 0) then
+            SET MESSAGE_TEXT = 'Reservation is not allowed (when there are delayed not returned books).';          
+    elseif (borrowed > 0) then
         SIGNAL SQLSTATE '45000' 
             SET MESSAGE_TEXT = 'Reservation is not allowed (this user has borrowed this book).';       
     end if; 
