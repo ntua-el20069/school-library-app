@@ -184,14 +184,29 @@ create view delayed_not_returned as
 (select *  from Borrowing where returned=0 and DATE_ADD(start_date, INTERVAL 7 DAY) < CURDATE());
 
 create view reservation_user_book as
-(select R.username as username, R.address as address, R.ISBN as ISBN , start_date, first_name, last_name, type, title
+(select R.username as username, R.address as address, R.ISBN as ISBN , start_date, first_name, last_name, type, valid, title
 from Reservation R, User U, Book B
 where R.username=U.username and R.ISBN=B.ISBN);
 
 create view borrowing_user_book as
-(select bor.username as username, bor.address as address, bor.ISBN as ISBN , start_date, first_name, last_name, type, title, returned, librarian
+(select bor.username as username, bor.address as address, bor.ISBN as ISBN , start_date, first_name, last_name, type, valid, title, returned, librarian
 from Borrowing bor, User U, Book B
 where bor.username=U.username and bor.ISBN=B.ISBN);
+
+create view delayed_not_returned_user_book as
+(select bor.username as username, bor.address as address, bor.ISBN as ISBN , start_date, first_name, last_name, type, valid, title, returned, librarian
+from delayed_not_returned bor, User U, Book B
+where bor.username=U.username and bor.ISBN=B.ISBN);
+
+create view borrowing_author as
+(select username, address, bor.ISBN as ISBN, start_date, name
+from Borrowing as bor, Author as A
+where bor.ISBN=A.ISBN);
+
+create view user_school as
+(select U.username as username, password, type, valid, S.address as address, name, S.username as librarian
+from User U, School_Library S  
+where U.address=S.address);
 
 -- 4.1.7 (Administrator question) 
 -- Find all authors who have written at least 5 books less than the author with the most books.

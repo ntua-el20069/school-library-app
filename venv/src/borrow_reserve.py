@@ -10,7 +10,7 @@ def all_borrowings_lib(db, username, address):
     sql = f"select username, ISBN, start_date, type, first_name, last_name, title,  returned, librarian from borrowing_user_book where address='{address}' order by username"
     cursor.execute(sql)
     borrowings = cursor.fetchall()
-    out = ''
+    out = '<h1> All borrowings </h1>'
     for borrowing in borrowings:
         username, ISBN, start_date, type, first_name, last_name, title,  returned, librarian = borrowing
         out += f'username = {username}, type = {type}, <br> name = {first_name} {last_name}, <br> address = {address} , ISBN = {ISBN}, title = {title} <br> &emsp; start_date = {start_date}, returned = {bool(returned)}, librarian = {librarian} <br><br>'
@@ -24,8 +24,19 @@ def all_reservations_lib(db, username, address):
     sql = f"select username, ISBN, start_date, type, first_name, last_name, title from reservation_user_book where address='{address}' order by username"
     cursor.execute(sql)
     reservations = cursor.fetchall()
-    out = ''
+    out = '<h1> All reservations </h1>'
     for reservation in reservations:
         username, ISBN, start_date, type, first_name, last_name, title = reservation
         out += f'username = {username}, type = {type}, <br> name = {first_name} {last_name}, <br> address = {address} , ISBN = {ISBN}, title = {title} <br> &emsp; start_date = {start_date} <br><br>'
+    return out
+
+def delayed_not_returned_lib(db, username, address):
+    cursor = db.cursor()
+    sql = f"select username, ISBN, start_date, type, first_name, last_name, title,  returned, librarian from delayed_not_returned_user_book where address='{address}' order by start_date"
+    cursor.execute(sql)
+    borrowings = cursor.fetchall()
+    out = '<h1> Delayed and not returned borrowings </h1>'
+    for borrowing in borrowings:
+        username, ISBN, start_date, type, first_name, last_name, title,  returned, librarian = borrowing
+        out += f'username = {username}, type = {type}, <br> name = {first_name} {last_name}, <br> address = {address} , ISBN = {ISBN}, title = {title} <br> &emsp; start_date = {start_date}, returned = {bool(returned)}, librarian = {librarian} <br><br>'
     return out

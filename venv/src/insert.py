@@ -51,8 +51,8 @@ def insert_user(db, f, write_dml):
         if user:
             attr = user.split(',')
             username, password, birth_date, first_name, last_name  = attr
-            ## accepts users with a probability of 0.5
-            valid = 0 if random.randint(1,100)>50 else 1
+            ## accepts users with a probability of 0.8
+            valid = 1 if random.randint(1,100)<80 else 0
             type = ''
             if count==5: 
                 type='admin'

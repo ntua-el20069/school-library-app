@@ -8,6 +8,8 @@ from .accept import *
 from .insert import *
 from .borrow_reserve import *
 from .user_questions import *
+from .admin_questions import *
+from .operator_questions import *
 
 
 app = Flask(__name__)
@@ -250,6 +252,11 @@ def admin(username):
     if not is_internal_request(): abort(401)
     return render_template('admin.html', username=username)
 
+@app.route('/not-borrowed-authors')
+def not_borrowed_authors_route():
+    if not is_internal_request(): abort(401)
+    return not_borrowed_authors(db)
+
 @app.route("/simple-user/<type>/<username>")
 def simple_user(type, username):
     if not is_internal_request(): abort(401)
@@ -310,6 +317,18 @@ def all_reservations_lib_route(username):
     address = cursor.fetchall()[0][0]
     if address:
         return all_reservations_lib(db, username, address)
+    else:
+        return 'An error occured!'
+
+@app.route("/librarian/<username>/delayed-not-returned")
+def delayed_not_returned_route(username):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    q = "select address from User where username='{}'".format(username)
+    cursor.execute(q)
+    address = cursor.fetchall()[0][0]
+    if address:
+        return delayed_not_returned_lib(db, username, address)
     else:
         return 'An error occured!'
 
