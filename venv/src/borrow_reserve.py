@@ -43,7 +43,26 @@ def delayed_not_returned_lib(db, address):
 
 def user_borrowings(db, borrower):
     if request.method == 'POST':
-        return ''
+        cursor = db.cursor()
+        sql = f"select username, address, ISBN, start_date from borrowing where username='{borrower}' and returned=0"
+        cursor.execute(sql)
+        not_returned_borrowings = cursor.fetchall()
+        out = ''
+        for bor in not_returned_borrowings:
+            key = [bor[0], bor[1], bor[2], str(bor[3])]
+            input_name = '+'.join(key)
+            print(input_name)
+            mode = request.form.get(input_name)
+            if mode=='return':
+                try:
+                    sql = f"update Borrowing set returned=1 where username='{bor[0]}' and address='{bor[1]}' and ISBN='{bor[2]}' and start_date='{bor[3]}'"
+                    cursor.execute(sql)
+                    db.commit()
+                    out += f'Book from Borrowing with username= {bor[0]} and address= {bor[1]} and ISBN= {bor[2]} and start_date= {bor[3]} was returned! <br>'
+                except mysql.connector.Error as err:
+                    print("Something went wrong: ", err)
+                    return 'Update Error <br> '
+        return out
     else:
         return render_template('user-borrowings.html', borrower=borrower)
         

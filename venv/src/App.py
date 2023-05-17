@@ -257,6 +257,11 @@ def not_borrowed_authors_route():
     if not is_internal_request(): abort(401)
     return not_borrowed_authors(db)
 
+@app.route('/frequent-authors')
+def frequent_authors_route():
+    if not is_internal_request(): abort(401)
+    return frequent_authors(db)
+
 @app.route("/simple-user/<type>/<username>")
 def simple_user(type, username):
     if not is_internal_request(): abort(401)
@@ -342,9 +347,13 @@ def delayed_not_returned_route(username):
     else:
         return 'An error occured!'
 
-@app.route("/librarian/<username>/user-borrowings/<borrower>")
+@app.route("/librarian/<username>/user-borrowings/<borrower>", methods=['GET', 'POST'])
 def user_borrowings_route(username, borrower):
     if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    sql = f"select * from User U, User L where L.username='{username}' and U.username='{borrower}' and L.address=U.address"
+    cursor.execute(sql)
+    if  not cursor.fetchall(): return 'This user is not in this school! <br>'
     return user_borrowings(db, borrower)
 
 @app.route('/<borrower>/get-borrowings-list')

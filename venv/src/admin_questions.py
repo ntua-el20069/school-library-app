@@ -15,3 +15,14 @@ def not_borrowed_authors(db):
     for author in authors:
         out += f'{author[0]}<br>'
     return out
+
+# 4.1.7.Find all authors who have written at least 5 books less than the author with the most books
+def frequent_authors(db):
+    cursor = db.cursor()
+    sql = 'select * from frequent_authors'
+    cursor.execute(sql)
+    authors = cursor.fetchall()
+    out = '<h1>authors who have written at least 5 books less than the author with the most books</h1>'
+    for author in authors:
+        out += f'Author: {author[0]} Books written: {author[1]}<br>'
+    return out
