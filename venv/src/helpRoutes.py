@@ -55,6 +55,13 @@ def get_schools_list(db):
     schools = cursor.fetchall()
     return jsonify(schools=schools)
 
+def get_borrowings_list(db, borrower):
+    cursor = db.cursor()
+    sql = f"select username, address, ISBN, start_date, type, first_name, last_name, title,  returned, librarian from borrowing_user_book where username='{borrower}' order by returned"
+    cursor.execute(sql)
+    userBorrowings = cursor.fetchall()
+    return jsonify(userBorrowings=userBorrowings)
+
 def books_in_system(db, username):
     out = 'Books in System <br><br><br>'
     cursor = db.cursor()

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Borrowings</title>
+    <style>
+        label[for=return]{
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <h1> User Borrowings (username: {{borrower}}) </h1>
+    <form method="post">
+        <ul id="userBorrowings">
+            <!-- Here will be positioned the userBorrowings with return inputs-->
+        </ul>
+        <input type="submit" value="Return selected books">
+        </form>
+</body>
+<script>
+    // change this....
+    listRoot = document.getElementById('userBorrowings')
+    fetch('/{{borrower}}/get-borrowings-list')
+        .then(response => response.json())
+        .then(userBorrowings => {
+            console.log(userBorrowings); 
+            const myList = userBorrowings.userBorrowings.map(item => item);
+            //const myList = Array.isArray(userBorrowings.userBorrowings) ? userBorrowings.userBorrowings.map(item => item) : [];
+            console.log(myList); 
+            for (let borrowing of myList){
+            let option = document.createElement("li");
+            option.value = borrowing;
+            [username, address, ISBN, start_date, type, first_name, last_name, title,  returned, librarian] = borrowing;
+            // I have to make the start_date like a date... and no timestamp
+            option.innerHTML = `username = ${username}, type = ${type}, <br> name = ${first_name} ${last_name}, <br> address = ${address} , ISBN = ${ISBN}, title = ${title} <br> &emsp; start_date = ${start_date}, returned = ${Boolean(returned)}, librarian = ${librarian} <br>`
+            
+            if (!returned){
+                let labelReturn = document.createElement('label');
+                labelReturn.setAttribute('for', 'return')
+                labelReturn.textContent = 'return';
+
+                let returnInput = document.createElement("input");
+                returnInput.setAttribute('type','radio');
+                const slicedArray = borrowing.slice(0, 4);
+                const joinedString = slicedArray.join('+');
+                returnInput.setAttribute('name', joinedString);
+                returnInput.setAttribute('value','return');
+                
+                option.appendChild(returnInput);
+                option.appendChild(labelReturn);
+            }
+
+            listRoot.appendChild(option);
+        }
+        })
+        
+</script>
+</html>

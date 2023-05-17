@@ -284,17 +284,27 @@ def update_user_route(username):
     if not is_internal_request(): abort(401)
     return update_user(db, username)
 
-@app.route("/librarian/<username>")
+@app.route("/librarian/<username>", methods=['GET', 'POST'])
 def librarian(username):
     if not is_internal_request(): abort(401)
     cursor = db.cursor()
     q = "select address from User where username='{}'".format(username)
     cursor.execute(q)
     address = cursor.fetchall()[0][0]
-    if address:
-        return render_template("librarian.html", username=username, address=address)
+    if request.method == 'POST':
+        borrower = request.form.get("borrower")
+        reservant = request.form.get("reservant")
+        if borrower=='' and reservant=='':
+            return 'you should write username either on the borrowing or the reservation field'
+        elif borrower!='':
+            return redirect(f'/librarian/{username}/user-borrowings/{borrower}')
+        else:
+            return 'Reservations for user - find has not been implemented yet'
     else:
-        return 'An error occured!'
+        if address:
+            return render_template("librarian.html", username=username, address=address)
+        else:
+            return 'An error occured!'
 
 @app.route("/librarian/<username>/all-borrowings")
 def all_borrowings_lib_route(username):
@@ -304,7 +314,7 @@ def all_borrowings_lib_route(username):
     cursor.execute(q)
     address = cursor.fetchall()[0][0]
     if address:
-        return all_borrowings_lib(db, username, address)
+        return all_borrowings_lib(db, address)
     else:
         return 'An error occured!'
 
@@ -316,7 +326,7 @@ def all_reservations_lib_route(username):
     cursor.execute(q)
     address = cursor.fetchall()[0][0]
     if address:
-        return all_reservations_lib(db, username, address)
+        return all_reservations_lib(db, address)
     else:
         return 'An error occured!'
 
@@ -328,9 +338,19 @@ def delayed_not_returned_route(username):
     cursor.execute(q)
     address = cursor.fetchall()[0][0]
     if address:
-        return delayed_not_returned_lib(db, username, address)
+        return delayed_not_returned_lib(db, address)
     else:
         return 'An error occured!'
+
+@app.route("/librarian/<username>/user-borrowings/<borrower>")
+def user_borrowings_route(username, borrower):
+    if not is_internal_request(): abort(401)
+    return user_borrowings(db, borrower)
+
+@app.route('/<borrower>/get-borrowings-list')
+def get_borrowings_list_route(borrower):
+    if not is_internal_request(): abort(401)
+    return get_borrowings_list(db, borrower)
 
 @app.route("/librarian/<lib_username>/accept-users", methods=['GET', 'POST'])
 def accept_users_route(lib_username):

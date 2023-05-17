@@ -19,17 +19,33 @@
     <a href="{{username}}/add-existing-book"> Add an existing in the system book to this school</a><br>
     <a href="/accept-review"> Accept not approved reviews</a><br>
     <br><br>
+    <form method="post" onsubmit="return(validate())">
     <fieldset>
         <legend> Borrowings </legend>
         <a href="/librarian/{{username}}/all-borrowings">All</a><br>
         <a href="/librarian/{{username}}/delayed-not-returned">Delayed and not returned</a><br>
-        <a href="#">Find a user's borrowings</a><br>
+        <p>Find a user's borrowings (press the button find after you insert username)</p>
+        <label for="borrower">username: </label>
+        <input type="text" id="borrower" name="borrower">
     </fieldset>
     <br>
     <fieldset>
         <legend> Reservations </legend>
         <a href="/librarian/{{username}}/all-reservations">All</a><br>
-        <a href="#">Find a user's reservations</a><br>
+        <p>Find a user's reservations (press the button find after you insert username)</p>
+        <label for="reservant">username: </label>
+        <input type="text" id="reservant" name="reservant">
     </fieldset>
+    <input type="submit" value="Find">
+    </form>
 </body>
+<script>
+    function validate(){
+        borrower = document.querySelector("#borrower").value;
+        reservant = document.querySelector("#reservant").value;
+        if (reservant=='' || borrower=='') return true;
+        alert("you should write the username only in one field (borrowing or reservation)");
+        return false;
+    }
+</script>
 </html>
