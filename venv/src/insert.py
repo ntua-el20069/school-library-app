@@ -220,7 +220,7 @@ def insert_book(db, f, write_dml):
     books = cursor.fetchall()
     for book in books:
         
-        for i in range(random.randint(1,2)): # inserts one or two topics
+        for i in range(random.randint(1,3)): # inserts one to three topics
             try:
                 topic = random.choice(topics)
                 sql = "insert into Topic values('{}','{}')".format(book[0], topic)

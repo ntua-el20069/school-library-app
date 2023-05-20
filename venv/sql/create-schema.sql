@@ -193,6 +193,23 @@ create view borrowing_user_book as
 from Borrowing bor, User U, Book B
 where bor.username=U.username and bor.ISBN=B.ISBN);
 
+create view borrowing_new_teachers as
+(select bor.username as username, bor.address as address, bor.ISBN as ISBN , start_date, first_name, last_name, type, valid, birth_date, returned, librarian
+from Borrowing bor, new_teachers U
+where bor.username=U.username);
+
+-- count(distinct(ISBN)) if you want to count distinct books borrowed
+create view new_teachers_number_of_books_borrowed as
+(select username, TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) as age,  count(*) as number 
+from borrowing_new_teachers group by username);
+
+create view max_borrowed_by_new_teacher as
+(select max(number) from new_teachers_number_of_books_borrowed);
+
+create view frequent_borrowing_new_teacher as 
+(select * from new_teachers_number_of_books_borrowed 
+where number=(select *  from max_borrowed_by_new_teacher));
+
 create view delayed_not_returned_user_book as
 (select bor.username as username, bor.address as address, bor.ISBN as ISBN , start_date, first_name, last_name, type, valid, title, returned, librarian
 from delayed_not_returned bor, User U, Book B
@@ -207,6 +224,28 @@ create view user_school as
 (select U.username as username, password, type, valid, S.address as address, name, S.username as librarian
 from User U, School_Library S  
 where U.address=S.address);
+
+create view topic_couples as
+(select A.ISBN as ISBN, A.topic as topic_a, B.topic as topic_b
+from Topic A, Topic B
+ where A.ISBN=B.ISBN and A.topic<B.topic);
+
+ create view borrowing_topic_couples as
+ (select username, address, b.ISBN as ISBN, start_date, topic_a, topic_b 
+ from Borrowing b, topic_couples t 
+ where b.ISBN=t.ISBN);
+
+ create view topic_couples_frequency as
+ (select topic_a, topic_b, count(*) as frequency 
+ from borrowing_topic_couples 
+ group by topic_a, topic_b
+ order by frequency DESC);
+
+-- 4.1.6. (Administrator question) 
+-- Many books cover more than one category. Among field pairs (e.g., history and poetry) that
+-- are common in books, find the top-3 pairs that appeared in borrowings.
+ create view three_popular_topic_couples as
+ (select * from topic_couples_frequency LIMIT 3);
 
 -- 4.1.7 (Administrator question) 
 -- Find all authors who have written at least 5 books less than the author with the most books.

@@ -257,6 +257,16 @@ def not_borrowed_authors_route():
     if not is_internal_request(): abort(401)
     return not_borrowed_authors(db)
 
+@app.route('/top3-popular-topic-couples')
+def top_three_popular_topic_couples_route():
+    if not is_internal_request(): abort(401)
+    return three_popular_topic_couples(db)
+
+@app.route('/frequent-borrowing-new-teachers')
+def frequent_borrowing_new_teachers_route():
+    if not is_internal_request(): abort(401)
+    return frequent_borrowing_new_teachers(db)
+
 @app.route('/frequent-authors')
 def frequent_authors_route():
     if not is_internal_request(): abort(401)
