@@ -5,6 +5,33 @@ import random
 from .helpRoutes import is_internal_request
 from datetime import datetime, timedelta
 
+# select distinct(name) from topic_author where topic='Cooking';
+# select distinct(username) from topic_this_year_borrowing_teacher where topic='Fantasy';
+
+# 4.1.2.For a given book category (user-selected), which authors belong to it and which teachers
+# have borrowed books from that category in the last year?
+def topic_authors_teachers(db):
+    out = ''
+    if request.method == 'POST':
+        topic = request.form.get('topic')
+        cursor = db.cursor()
+        # for teachers
+        sql = f"select distinct(username) from topic_this_year_borrowing_teacher where topic='{topic}'"
+        cursor.execute(sql)
+        teachers = cursor.fetchall()
+        out1 = f'<h1>teachers who have borrowed books from category {topic} in the last year</h1>'
+        for teacher in teachers:
+            out1 += f'{teacher[0]}<br>'
+        # for authors
+        sql = f"select distinct(name) from topic_author where topic='{topic}' "
+        cursor.execute(sql)
+        authors = cursor.fetchall()
+        out2 = f'<h1>authors who have written books having category {topic} </h1>'
+        for author in authors:
+            out2 += f'{author[0]} <br>'
+        out = out1 + out2
+    return render_template('topic-admin.html') + out 
+
 # 4.1.3.Find young teachers (age < 40 years) who have borrowed the most books and the number of books.
 def frequent_borrowing_new_teachers(db):
     cursor = db.cursor()
@@ -26,6 +53,22 @@ def not_borrowed_authors(db):
     for author in authors:
         out += f'{author[0]}<br>'
     return out
+
+# 4.1.5.Which operators have loaned the same number of books in a year with more than 20 loans?
+def libs_lend_books(db):
+    out = ''
+    if request.method == 'POST':
+        year = request.form.get('year')
+        cursor = db.cursor()
+        # for teachers
+        sql = f"select librarian, count(*) from Borrowing where start_date between '{year}-01-01' and '{year}-12-31' group by librarian having count(*)>20 order by count(*) desc"
+        cursor.execute(sql)
+        librarians = cursor.fetchall()
+        out = f'<h1>operators who have loaned the same number of books in a year with more than 20 loans</h1>'
+        for lib in librarians:
+            out += f'{lib[0]} number of loans in selected year: {lib[1]}<br>'
+        
+    return render_template('libs-lend-admin.html') + out 
 
 # 4.1.6.Many books cover more than one category. Among field pairs (e.g., history and poetry) that
 # are common in books, find the top-3 pairs that appeared in borrowings.

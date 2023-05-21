@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title> select topic </title>
+        <style>
+            body{
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            
+            form {
+                background-color: #cfd3ce;
+                padding: 2em;
+            }
+
+            label {
+                font-size: 0.8em;
+            }
+            input[type=text], input[type=password]{
+                width: 100%;
+                padding: 1em;
+                border: 1px solid #bbbbbb;
+                border-radius: 5px;
+                margin-top: 1em;
+                box-sizing: border-box;
+           }
+
+
+           input[type=submit]{
+                background-color: #34626C;
+                font-size:  1.2em;
+                color: white;
+           }
+
+        </style>
+    </head>
+
+    <body>
+        <form method='post' onsubmit="return(validate());">
+            <fieldset>
+                <legend> select topic </legend>
+                
+                <label for="topics"> Topic </label>
+                <input list="topics" name="topic" required>
+                <datalist id="topics">
+                    <select name="topic" id="topic">
+                         <!-- εδώ θα μπούν οι επιλογές που δημιουργούνται από τη JavaScript -->
+                    </select>
+                    </datalist>  
+                <input type="submit" value="Submission">
+            </fieldset>
+        </form>
+
+    </body>
+
+        <script>
+
+        
+        const topicSelect = document.querySelector("#topic");
+            
+            function validate(){
+                
+                return true;
+                
+            }   
+
+        fetch('/topics-list')
+        .then(response => response.json())
+        .then(topics => {
+            console.log(topics); 
+            const myList = topics.topics.map(item => item);
+            console.log(myList); 
+            for (let topic of myList){
+            let option = document.createElement("option");
+            option.value = topic;
+            option.textContent = topic;
+            topicSelect.appendChild(option);
+        }
+        });
+        
+
+        
+
+
+        
+        
+        </script>
+    
+    
+        
+    
+    
+    
+</html>

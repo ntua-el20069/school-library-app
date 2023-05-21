@@ -162,6 +162,10 @@ def signup_form_redirect():
 def schools_list_route():
     return get_schools_list(db)
 
+@app.route('/topics-list')
+def topics_list_route():
+    return get_topics_list(db)
+
 @app.route("/signin", methods=['GET', 'POST'])
 def handle_signin():
     if request.method == 'POST':     # here I handle post request by submitting the sign in form
@@ -251,6 +255,16 @@ def accept_libs_route():
 def admin(username):
     if not is_internal_request(): abort(401)
     return render_template('admin.html', username=username)
+
+@app.route('/topics-info', methods = ['GET', 'POST'])
+def topics_info_route():
+    if not is_internal_request(): abort(401)
+    return topic_authors_teachers(db)
+
+@app.route('/libs-lend-books', methods = ['GET', 'POST'])
+def libs_lend_route():
+    if not is_internal_request(): abort(401)
+    return libs_lend_books(db)
 
 @app.route('/not-borrowed-authors')
 def not_borrowed_authors_route():

@@ -97,7 +97,7 @@ def insert_lib(db, f, write_dml):
             attr = lib.split(',')
             address, city, phone, email, principal, _ = attr
             try:
-                sql = """insert into School_Library values('{}','{}','{}','{}','{}','{}',{});""".format(address, name, city, phone, email, principal, 'null')
+                sql = """insert into School_Library values('{}','{}','{}','{}','{}','{}');""".format(address, name, city, phone, email, principal)
                 cursor.execute(sql)
                 db.commit()
                 out = out + 'address={}, name={}, city={}, phone={}, email={}, principal={}, library_admin={}'.format(address, name, city, phone, email, principal, 'null') + '<br>'
@@ -125,6 +125,7 @@ def insert_signup_approval(db, f, write_dml):
             if libs_for_librarians:
                 address = libs_for_librarians[0]
                 libs_for_librarians.pop(0)
+                '''
                 try:
                     sql = f"update School_Library set username='{username}' where address='{address}'"
                     cursor.execute(sql)
@@ -135,6 +136,7 @@ def insert_signup_approval(db, f, write_dml):
                 except mysql.connector.Error as err:
                     print("Something went wrong: ", err) 
                     return "<h1>Update Error!!!</h1>"
+                '''
                 # set library_admin = lib.username in table School Library
                 ############################################
             else:
@@ -381,8 +383,13 @@ def insert_borrowing(db, f, write_dml):
                     ISBN, books_number = books[random.randint(1,100) % len(books)]
                     books.pop()
                     for i in range(random.randint(1,3)):
-                        #  at least 70% of the borrowings are the last 100 days
-                        days_before = 100 if random.randint(1,100)<70 else 3000
+                        u = random.randint(1,100)
+                        if u < 60: # at least 60% of the borrowings are the last 100 days
+                            days_before = 100
+                        elif u < 90: # 30% may be at the past year
+                            days_before = 500
+                        else:
+                            days_before = 3000
                         ## compute a random start_date between demand past_date and now
                         past_date = today - timedelta(days=days_before)
                         time_only = time(12, 0, 0)

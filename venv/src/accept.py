@@ -2,8 +2,9 @@ from flask import Flask, render_template, request, url_for, flash, redirect, jso
 from flask_httpauth import HTTPBasicAuth
 import mysql.connector 
 import random
-from .helpRoutes import is_internal_request
-from datetime import datetime, timedelta
+from .helpRoutes import is_internal_request, create
+from datetime import datetime, timedelta, date
+import subprocess
 
 
 ## Here are some functions for Routes that accept librarians (from admin), users (from librarian)
@@ -30,9 +31,9 @@ def accept_librarians(db):
                         sql_query = "update User set valid=1 where username='{}'".format(lib[0])
                         cursor.execute(sql_query)
                         db.commit()
-                        sql_query = "update School_Library set username='{}' where address='{}'".format(lib[0],  lib[1])
-                        cursor.execute(sql_query)
-                        db.commit()
+                        #sql_query = "update School_Library set username='{}' where address='{}'".format(lib[0],  lib[1])
+                        #cursor.execute(sql_query)
+                        #db.commit()
                         out += lib[0] + ' accepted <br>'
                     except mysql.connector.Error as err:
                         print("Something went wrong: ", err)
@@ -114,7 +115,7 @@ def insert_school(db):
         #library_admin = request.form.get('libAdmin')
         cursor = db.cursor()
         try:
-            sql_query = """insert into School_Library values('{}','{}','{}','{}','{}','{}',null);""".format(address, name, city, phone, email, principal)
+            sql_query = """insert into School_Library values('{}','{}','{}','{}','{}','{}');""".format(address, name, city, phone, email, principal)
             cursor.execute(sql_query)
             db.commit()
             out = 'School with attributes <br>'
@@ -213,14 +214,15 @@ def change_password(db, username):
             return "Error: maybe update constraint <br>"
     else:
         return render_template('change-password.html', username=username)
-    
+
+
 def backup(db, db_name):
     if request.method == 'POST':
         confirm = request.form.get('backup')
         if confirm=='no': return 'backup creation was denied'
         out = ''
         cursor = db.cursor()
-        cursor.execute('show tables;')
+        cursor.execute('SHOW FULL TABLES WHERE Table_type = "BASE TABLE"')
         table_names = []
         for record in cursor.fetchall():
             table_names.append(record[0])
@@ -256,26 +258,56 @@ def restore(db, db_name):
         except mysql.connector.Error as err:
             print("Something went wrong: ", err)
             return 'there is no backup database'
-        cursor.execute('show tables;')
+        #cursor.execute('SHOW FULL TABLES WHERE Table_type = "BASE TABLE"')
         table_names = []
-        for record in cursor.fetchall():
-            table_names.append(record[0])
-        try:
-            cursor.execute(f'DROP SCHEMA IF EXISTS {db_name}')
-            cursor.execute(f'CREATE DATABASE {db_name}')
-            cursor.execute(f'USE {db_name}')
-            for table_name in table_names:
-                cursor.execute(
-                f'CREATE TABLE {table_name} SELECT * FROM {backup_dbname}.{table_name}')
-            cursor.execute(f'USE {db_name}')
-            out += 'restore was done <br> the original database is used now'
-            return out
-        except mysql.connector.Error as err:
-            print("Something went wrong: ", err)
-            return 'an error occured so the restore process cannot proceed <br>'
+        all_tables = "School_Library User Book Available Author Topic Keyword Review Borrowing Reservation"
+        table_names = all_tables.split(' ')
+        reversed_list = table_names[::-1]
+        print(table_names)
+        #for record in cursor.fetchall():
+            #table_names.append(record[0])
+    
+        #cursor.execute(f'DROP SCHEMA IF EXISTS {db_name}')
+        #cursor.execute(f'CREATE DATABASE {db_name}')
+        cursor.execute(f'USE {db_name}')
+        for table_name in reversed_list:
+            try:
+                cursor.execute(f'DELETE FROM {table_name}')
+                db.commit()
+                print(f"deleted from {table_name}")
+            except mysql.connector.Error as err:
+                print("Something went wrong: ", err)
+                return 'an error occured so the restore process cannot proceed <br>'
+        for table_name in table_names:
+            print(table_name)
+            #cursor.execute(f'DROP TABLE IF EXISTS {table_name}')
+            cursor.execute(f"SELECT * FROM {backup_dbname}.{table_name}")
+            tuples = cursor.fetchall()
+            for tup in tuples:
+                try:
+                    converted_values = []
+                    for val in tup:
+                        if isinstance(val, date):
+                            converted_values.append(val.strftime('{}-{}-{}').format(val.year, val.month, val.day))
+                        else:
+                            converted_values.append(val)
+                    if random.randint(1,100)<1 : print(tup)
+                    tup = tuple(converted_values)
+                    cursor.execute(f"INSERT INTO {table_name} values{tup} ")
+                    db.commit()
+                except mysql.connector.Error as err:
+                    print(tup)
+                    for val in tup:
+                        print(type(val))
+                    print("Something went wrong: ", err)
+            #cursor.execute(f'CREATE TABLE {table_name} SELECT * FROM {backup_dbname}.{table_name}')
+        #cursor.execute(f'USE {db_name}')
+        out += 'restore was done <br> the original database is used now'
+        return out
     else:
         return render_template('restore.html')
 
+        
 def update_book(db, ISBN, address):
     cursor = db.cursor()
     if request.method == 'POST':

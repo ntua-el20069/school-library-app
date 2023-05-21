@@ -55,6 +55,12 @@ def get_schools_list(db):
     schools = cursor.fetchall()
     return jsonify(schools=schools)
 
+def get_topics_list(db):
+    cursor = db.cursor()
+    cursor.execute("SELECT distinct(topic) FROM Topic")
+    topics = cursor.fetchall()
+    return jsonify(topics=topics)
+
 def get_borrowings_list(db, borrower):
     cursor = db.cursor()
     sql = f"select username, address, ISBN, start_date, type, first_name, last_name, title,  returned, librarian from borrowing_user_book where username='{borrower}' order by returned"

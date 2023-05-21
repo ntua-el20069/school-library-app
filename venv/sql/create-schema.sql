@@ -44,9 +44,7 @@ city varchar(30),
 phone char(10),
 email   varchar(30),
 principal  varchar(50),
-username varchar(20) ,
-primary key (address),
-constraint  foreign key (username) references User(username) on update restrict on delete restrict
+primary key (address)
 ) ;
 
 alter table User 
@@ -206,6 +204,7 @@ from borrowing_new_teachers group by username);
 create view max_borrowed_by_new_teacher as
 (select max(number) from new_teachers_number_of_books_borrowed);
 
+-- 4.1.3.Find young teachers (age < 40 years) who have borrowed the most books and the number of books.
 create view frequent_borrowing_new_teacher as 
 (select * from new_teachers_number_of_books_borrowed 
 where number=(select *  from max_borrowed_by_new_teacher));
@@ -221,9 +220,9 @@ from Borrowing as bor, Author as A
 where bor.ISBN=A.ISBN);
 
 create view user_school as
-(select U.username as username, password, type, valid, S.address as address, name, S.username as librarian
-from User U, School_Library S  
-where U.address=S.address);
+(select U.username as username, U.password as password, U.type as type, U.valid as valid, U.address as address, name, L.username as librarian
+from User U, User L, School_Library S  
+where U.address=S.address and S.address=L.address and L.type='librarian' and L.valid=1);
 
 create view topic_couples as
 (select A.ISBN as ISBN, A.topic as topic_a, B.topic as topic_b
@@ -240,6 +239,21 @@ from Topic A, Topic B
  from borrowing_topic_couples 
  group by topic_a, topic_b
  order by frequency DESC);
+
+-- 4.1.2. (Administrator question) 
+-- For a given book category (user-selected), which authors belong to it and which teachers
+-- have borrowed books from that category in the last year?
+ create view topic_author as
+ (select name,  T.ISBN as ISBN, topic 
+ from author A, topic T
+ where A.ISBN=T.ISBN);
+
+ create view topic_this_year_borrowing_teacher as
+ (select bor.username as username, bor.address as address, bor.ISBN as ISBN , start_date, first_name, last_name, type, valid, topic, returned, librarian
+from this_year_borrowings bor, User U, Topic B
+where bor.username=U.username and bor.ISBN=B.ISBN and U.type='teacher');
+
+
 
 -- 4.1.6. (Administrator question) 
 -- Many books cover more than one category. Among field pairs (e.g., history and poetry) that
