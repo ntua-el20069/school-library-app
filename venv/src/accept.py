@@ -278,6 +278,9 @@ def restore(db, db_name):
             except mysql.connector.Error as err:
                 print("Something went wrong: ", err)
                 return 'an error occured so the restore process cannot proceed <br>'
+        # disable triggers to insert data
+        cursor.execute("SET @var_trigger = 0;")
+
         for table_name in table_names:
             print(table_name)
             #cursor.execute(f'DROP TABLE IF EXISTS {table_name}')
@@ -291,17 +294,19 @@ def restore(db, db_name):
                             converted_values.append(val.strftime('{}-{}-{}').format(val.year, val.month, val.day))
                         else:
                             converted_values.append(val)
-                    if random.randint(1,100)<1 : print(tup)
                     tup = tuple(converted_values)
                     cursor.execute(f"INSERT INTO {table_name} values{tup} ")
                     db.commit()
                 except mysql.connector.Error as err:
                     print(tup)
-                    for val in tup:
-                        print(type(val))
+                    #for val in tup:
+                        #print(type(val))
                     print("Something went wrong: ", err)
             #cursor.execute(f'CREATE TABLE {table_name} SELECT * FROM {backup_dbname}.{table_name}')
         #cursor.execute(f'USE {db_name}')
+        # enable triggers
+        cursor.execute("SET @var_trigger = 1;")
+
         out += 'restore was done <br> the original database is used now'
         return out
     else:

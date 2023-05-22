@@ -276,35 +276,39 @@ create view avg_category_rating as
 (select topic, avg(likert) as avg_likert from review_book_topic group by topic);
 
 DELIMITER ;;
-
+-- @var_trigger is set to 0 when I want to disable triggers
 CREATE TRIGGER `borrow` AFTER INSERT ON `Borrowing` FOR EACH ROW BEGIN
     declare books int;
     declare bor_num int;
     declare bor_type varchar(20);
-    select books_number into books from Available A where A.ISBN=new.ISBN and A.address=new.address;
-    select count(*) into bor_num from Borrowing where username = NEW.username and DATE_SUB(CURDATE(), INTERVAL 7 DAY) < start_date;
-    select type into bor_type from User where username = NEW.username;
-    IF books=0 then
-        -- ??? here I should insert it into Reservation ? no use try-except in Python .. and insert to Reservation
-        SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Borrowing is not allowed (book is not available).';
-    ELSEIF (bor_type='student' and bor_num >= 3) then
-        SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Borrowing is not allowed (students can borrow only 2 books per week).';
-    ELSEIF (bor_type='teacher' and bor_num >= 2) then
-        SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Borrowing is not allowed (teachers can borrow only 1 books per week).';
-    ELSEIF books>0 and new.returned=0 then 
-        UPDATE Available A SET books_number=books_number - 1 where A.ISBN=new.ISBN and A.address=new.address;
+    IF @var_trigger IS NULL OR @var_trigger = 1 THEN
+        select books_number into books from Available A where A.ISBN=new.ISBN and A.address=new.address;
+        select count(*) into bor_num from Borrowing where username = NEW.username and DATE_SUB(CURDATE(), INTERVAL 7 DAY) < start_date;
+        select type into bor_type from User where username = NEW.username;
+        IF books=0 then
+            -- ??? here I should insert it into Reservation ? no use try-except in Python .. and insert to Reservation
+            SIGNAL SQLSTATE '45000' 
+                SET MESSAGE_TEXT = 'Borrowing is not allowed (book is not available).';
+        ELSEIF (bor_type='student' and bor_num >= 3) then
+            SIGNAL SQLSTATE '45000' 
+                SET MESSAGE_TEXT = 'Borrowing is not allowed (students can borrow only 2 books per week).';
+        ELSEIF (bor_type='teacher' and bor_num >= 2) then
+            SIGNAL SQLSTATE '45000' 
+                SET MESSAGE_TEXT = 'Borrowing is not allowed (teachers can borrow only 1 books per week).';
+        ELSEIF books>0 and new.returned=0 then 
+            UPDATE Available A SET books_number=books_number - 1 where A.ISBN=new.ISBN and A.address=new.address;
+        end if;
     end if;
   END;;
 
 CREATE TRIGGER `borrow_update` AFTER UPDATE ON `Borrowing` FOR EACH ROW BEGIN
-    IF NEW.returned = 1 AND OLD.returned = 0 THEN
-        -- the book was returned so increment the books_number for this (ISBN, address) in Available
-        UPDATE Available A
-        SET A.books_number = A.books_number + 1
-        WHERE A.ISBN = NEW.ISBN AND A.address = NEW.address;
+    IF @var_trigger IS NULL OR @var_trigger = 1 THEN
+        IF NEW.returned = 1 AND OLD.returned = 0 THEN
+            -- the book was returned so increment the books_number for this (ISBN, address) in Available
+            UPDATE Available A
+            SET A.books_number = A.books_number + 1
+            WHERE A.ISBN = NEW.ISBN AND A.address = NEW.address;
+        end if;
     end if;
   end;;
 
@@ -313,23 +317,25 @@ CREATE TRIGGER `reserve` AFTER INSERT ON `Reservation` FOR EACH ROW BEGIN
     declare res_num int;
     declare delayed_and_not_returned int;
     declare borrowed int;
-    select type into res_type from User where username = NEW.username;
-    select count(*) into res_num from Reservation where username = NEW.username;
-    select count(*) into delayed_and_not_returned from Borrowing where username = NEW.username and returned=0 and DATE_ADD(start_date, INTERVAL 7 DAY) < CURDATE();
-    select count(*) into borrowed from Borrowing where username = NEW.username and address = NEW.address and ISBN = NEW.ISBN  and returned=0;
-    if (res_type='student' and res_num >= 3) then
-        SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Reservation is not allowed (students can reserve only 2 books per week).';
-    elseif (res_type='teacher' and res_num >= 2) then
-        SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Reservation is not allowed (teachers can reserve only 1 book per week).';
-    elseif (delayed_and_not_returned > 0) then
-        SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Reservation is not allowed (when there are delayed not returned books).';          
-    elseif (borrowed > 0) then
-        SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Reservation is not allowed (this user has borrowed this book).';       
-    end if; 
+    IF @var_trigger IS NULL OR @var_trigger = 1 THEN
+        select type into res_type from User where username = NEW.username;
+        select count(*) into res_num from Reservation where username = NEW.username;
+        select count(*) into delayed_and_not_returned from Borrowing where username = NEW.username and returned=0 and DATE_ADD(start_date, INTERVAL 7 DAY) < CURDATE();
+        select count(*) into borrowed from Borrowing where username = NEW.username and address = NEW.address and ISBN = NEW.ISBN  and returned=0;
+        if (res_type='student' and res_num >= 3) then
+            SIGNAL SQLSTATE '45000' 
+                SET MESSAGE_TEXT = 'Reservation is not allowed (students can reserve only 2 books per week).';
+        elseif (res_type='teacher' and res_num >= 2) then
+            SIGNAL SQLSTATE '45000' 
+                SET MESSAGE_TEXT = 'Reservation is not allowed (teachers can reserve only 1 book per week).';
+        elseif (delayed_and_not_returned > 0) then
+            SIGNAL SQLSTATE '45000' 
+                SET MESSAGE_TEXT = 'Reservation is not allowed (when there are delayed not returned books).';          
+        elseif (borrowed > 0) then
+            SIGNAL SQLSTATE '45000' 
+                SET MESSAGE_TEXT = 'Reservation is not allowed (this user has borrowed this book).';       
+        end if; 
+    end if;
   END;;
 
 CREATE PROCEDURE DeletePastReservations() BEGIN
