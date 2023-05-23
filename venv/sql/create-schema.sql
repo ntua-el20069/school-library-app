@@ -240,6 +240,20 @@ from Topic A, Topic B
  group by topic_a, topic_b
  order by frequency DESC);
 
+ create view borrowings_per_school_year as
+ (select B.address as address, name, city, year(start_date) as year, count(*) as number
+ from Borrowing B, School_Library S 
+ where B.address=S.address 
+ group by address, name, city, year);
+
+create view borrowings_per_school_year_month as
+ (select B.address as address, name, city, year(start_date) as year, month(start_date) as month, count(*) as number
+ from Borrowing B, School_Library S 
+ where B.address=S.address 
+ group by address, name, city, year, month);
+
+
+
 -- 4.1.2. (Administrator question) 
 -- For a given book category (user-selected), which authors belong to it and which teachers
 -- have borrowed books from that category in the last year?

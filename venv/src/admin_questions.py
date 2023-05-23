@@ -5,8 +5,29 @@ import random
 from .helpRoutes import is_internal_request
 from datetime import datetime, timedelta
 
-# select distinct(name) from topic_author where topic='Cooking';
-# select distinct(username) from topic_this_year_borrowing_teacher where topic='Fantasy';
+
+# 4.1.1.List with the total number of loans per school (Search criteria: year, calendar month, e.g.January)
+def borrowings_per_school_year_month(db):
+    out = ''
+    if request.method == 'POST':
+        year = request.form.get('year')
+        month = request.form.get('month')
+        cursor = db.cursor()
+        # for year only
+        if month=='':
+            out = f'<h1>Borrowings in each school in year {year}</h1>'
+            sql = f"select name, address, number from borrowings_per_school_year where year={year}"
+        # for year and month
+        else:
+            out = f'<h1>Borrowings in each school in month {month} of year {year}</h1>'
+            sql = f"select name, address, number from borrowings_per_school_year_month where year={year} and month={month}"
+        cursor.execute(sql)
+        schools = cursor.fetchall()
+        for school in schools:
+            name, address, number = school
+            out += f'{name} &emsp; {address} Borrowings = {number}<br>'     
+    return render_template('year-month-admin.html') + out
+
 
 # 4.1.2.For a given book category (user-selected), which authors belong to it and which teachers
 # have borrowed books from that category in the last year?

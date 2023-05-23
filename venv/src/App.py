@@ -286,6 +286,11 @@ def frequent_authors_route():
     if not is_internal_request(): abort(401)
     return frequent_authors(db)
 
+@app.route('/year-month-borrowings', methods=['GET','POST'])
+def year_month_borrowings():
+    if not is_internal_request(): abort(401)
+    return borrowings_per_school_year_month(db)
+
 @app.route("/simple-user/<type>/<username>")
 def simple_user(type, username):
     if not is_internal_request(): abort(401)

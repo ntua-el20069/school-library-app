@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> select year-month </title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        form {
+            background-color: #cfd3ce;
+            padding: 2em;
+        }
+
+        label {
+            font-size: 0.8em;
+        }
+
+        input[type=text],
+        input[type=password] {
+            width: 100%;
+            padding: 1em;
+            border: 1px solid #bbbbbb;
+            border-radius: 5px;
+            margin-top: 1em;
+            box-sizing: border-box;
+        }
+
+
+        input[type=submit] {
+            background-color: #34626C;
+            font-size: 1.2em;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <form method='post' onsubmit="return(validate());">
+        <fieldset>
+            <legend> select year & month </legend>
+
+            <label for="years"> Year </label>
+            <input list="years" name="year" required>
+            <datalist id="years">
+                <select name="year" id="year">
+                    <!-- εδώ θα μπούν οι επιλογές που δημιουργούνται από τη JavaScript -->
+                </select>
+            </datalist>
+
+            <label for="months"> Month </label>
+            <input list="months" name="month" >
+            <datalist id="months">
+                <select name="month" id="month">
+                    <!-- εδώ θα μπούν οι επιλογές που δημιουργούνται από τη JavaScript -->
+                </select>
+            </datalist>
+            <input type="submit" value="Submission">
+        </fieldset>
+    </form>
+
+</body>
+
+<script>
+
+
+    const yearSelect = document.querySelector("#year");
+    const monthSelect = document.querySelector("#month");
+    function validate() {
+
+        return true;
+
+    }
+
+
+    const current_date = new Date();
+    const current_year = current_date.getFullYear();
+    for (let i = 0; i < 50; i++) {
+        let option = document.createElement("option");
+        option.value = current_year - i;
+        option.textContent = current_year - i;
+        yearSelect.appendChild(option);
+    }
+    for (let i = 1; i < 13; i++) {
+        let option = document.createElement("option");
+        option.value = i;
+        const dateObj = new Date(2000, i-1, 1);
+        // Get the string representation of the month
+        const monthName = dateObj.toLocaleString('default', { month: 'long' });
+        option.textContent = monthName;
+        monthSelect.appendChild(option);
+    }
+
+
+
+
+
+
+
+
+
+
+</script>
+
+
+
+
+
+
+</html>
