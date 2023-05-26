@@ -5,6 +5,13 @@ import random
 from .helpRoutes import is_internal_request
 from datetime import datetime, timedelta
 
+# 4.3.1.List with all books (Search criteria: title/category/author), ability to select a book and create
+#       a reservation request
+# Attention!!!
+# The list is solved in def (function) books_in_library which is in operator_questions.py
+# Here this part of the question is implemented:
+# ability to  select a book and create a reservation request
+
 ### Question 4.3.2 List of all books borrowed by this user
 def books_borrowed(db, username):
     cursor = db.cursor()

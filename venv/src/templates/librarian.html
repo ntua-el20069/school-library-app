@@ -19,8 +19,13 @@
     <a href="{{username}}/add-existing-book"> Add an existing in the system book to this school</a><br>
     <a href="/accept-review"> Accept not approved reviews</a><br>
     <br><br>
-    <form method="post" onsubmit="return(validate())">
     <fieldset>
+        <legend>Questions</legend>
+        <a href="/librarian/{{username}}/books-in-library">All books by Title, Author (Search criteria: title/ category/ author/ copies).</a><br>
+    </fieldset>
+    <form method="post" onsubmit="return(validate())">
+    
+        <fieldset>
         <legend> Borrowings </legend>
         <a href="/librarian/{{username}}/all-borrowings">All</a><br>
         <a href="/librarian/{{username}}/delayed-not-returned">Delayed and not returned</a><br>

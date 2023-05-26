@@ -5,3 +5,79 @@ import random
 from .helpRoutes import is_internal_request
 from datetime import datetime, timedelta
 
+# 4.2.1. All books by Title, Author (Search criteria: title/ category/ author/ copies).
+# Also there is a a part of simple user question
+#              4.3.1.List with all books (Search criteria: title/category/author)
+def books_in_library(db, address, simple_user = False):
+    out = ''
+    cursor = db.cursor()
+    order = 'title'
+    temp = 'books-simple-user.html' if simple_user else 'books-librarian.html'
+    if request.method == 'POST':
+        title = request.form.get('title')
+        author = request.form.get('author')
+        topic = request.form.get('topic')
+        if simple_user:
+            available = ''
+        else:
+            available = request.form.get('available')
+        #order = request.form.get('order')
+        
+        if title!='':
+            out = f'<h1>Books in this school with title = {title}</h1>'
+            sql = f"""select ISBN, title, publisher, pages, image, language, summary,
+                        address, books_number
+                          from book_available 
+                          where title='{title}' and address='{address}'
+                          order by {order}"""
+        elif author!='':
+            out = f'<h1>Books in this school with author = {author}</h1>'
+            sql = f"""select ISBN, title, publisher, pages, image, language, summary,
+                        address, books_number
+                          from book_author_available 
+                          where name='{author}' and address='{address}'
+                          order by {order}"""
+        elif topic!='':
+            out = f'<h1>Books in this school with topic = {topic}</h1>'
+            sql = f"""select ISBN, title, publisher, pages, image, language, summary,
+                        address, books_number
+                          from book_topic_available 
+                          where topic ='{topic}' and address='{address}'
+                          order by {order}"""
+        elif available!='':
+            out = f'<h1>Books in this school with available copies >= {available}</h1>'
+            sql = f"""select ISBN, title, publisher, pages, image, language, summary,
+                        address, books_number
+                          from book_available 
+                          where books_number >= {available} and address='{address}'
+                          order by {order}"""
+        else:
+            return "Error: Nothing was submitted. Please input exactly one field"
+        
+       
+    else:
+        out = f'<h1>All Books in this school</h1>'
+        sql = f"""select ISBN, title, publisher, pages, image, language, summary,
+                        address, books_number
+                          from book_available 
+                          where address='{address}'
+                          order by {order}"""
+    try:
+        cursor.execute(sql)
+        books = cursor.fetchall()
+        for book in books:
+            ISBN, title, publisher, pages, image, language, summary, address, books_number = book
+            # print authors too
+            sql = f"select name from Author where ISBN='{ISBN}'"
+            cursor.execute(sql)
+            authors = ', '.join([c[0] for c in cursor.fetchall()])
+            # print topics too
+            sql = f"select topic from Topic where ISBN='{ISBN}'"
+            cursor.execute(sql)
+            topics = ', '.join([c[0] for c in cursor.fetchall()])
+            # ...
+            out += f'ISBN = {ISBN} title = {title}<br> Authors: {authors} <br> Topics: {topics} <br> <img src="{image}" width="200px"> <br><br>'     
+    except ValueError as err:
+        print(err)
+        return "Not found!"
+    return render_template(temp) + out

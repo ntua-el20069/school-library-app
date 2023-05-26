@@ -219,6 +219,24 @@ create view borrowing_author as
 from Borrowing as bor, Author as A
 where bor.ISBN=A.ISBN);
 
+create view book_available as
+(select b.ISBN as ISBN, title, publisher, pages, image, language, summary,
+address, books_number 
+from Book b, Available a
+where b.ISBN = a.ISBN);
+
+create view book_author_available as 
+(select b.ISBN as ISBN, title, publisher, pages, image, language, summary,
+address, books_number, name 
+from book_available b, Author au
+where b.ISBN = au.ISBN);
+
+create view book_topic_available as
+(select b.ISBN as ISBN, title, publisher, pages, image, language, summary,
+address, books_number, topic 
+from book_available b, Topic t
+where b.ISBN = t.ISBN);
+
 create view user_school as
 (select U.username as username, U.password as password, U.type as type, U.valid as valid, U.address as address, name, L.username as librarian
 from User U, User L, School_Library S  
