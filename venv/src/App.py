@@ -437,6 +437,15 @@ def books_librarian_route(username):
     address = cursor.fetchall()[0][0]
     return books_in_library(db, address)
 
+@app.route('/librarian/<username>/delayed-not-returned-search', methods = ['GET', 'POST'])
+def delayed_not_returned_search_route(username):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    sql = "select address from User where username='{}'".format(username)
+    cursor.execute(sql)
+    address = cursor.fetchall()[0][0]
+    return delayed_not_returned_search(db, address)
+
 @app.route('/simple-user/<type>/<username>/books-in-library', methods = ['GET', 'POST'] )
 def books_simple_user_route(username, type):
     if not is_internal_request(): abort(401)

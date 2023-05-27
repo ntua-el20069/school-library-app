@@ -82,3 +82,35 @@ def books_in_library(db, address, simple_user = False, type='librarian', usernam
         print(err)
         return "Not found!"
     return render_template(temp) + out
+
+# 4.2.2.Find all borrowers who own at least one book and have delayed its return. (Search criteria:
+# First Name, Last Name, Delay Days).
+def delayed_not_returned_search(db, address):
+    out = ''
+    cursor = db.cursor()
+    if request.method == 'POST':
+        first_name = request.form.get('first')
+        last_name = request.form.get('last')
+        days_delayed = request.form.get('delay')
+        if last_name!='':
+            out= f'<h1>Users that have Delayed and not returned books in this Library and have last name = {last_name} </h1>'
+            sql= f'select distinct(username), first_name, last_name from delayed_not_returned_user_book where address="{address}" and last_name="{last_name}"'
+        elif first_name!='':
+            out= f'<h1>Users that have Delayed and not returned books in this Library and have first name = {first_name} </h1>'
+            sql= f'select distinct(username), first_name, last_name  from delayed_not_returned_user_book where address="{address}" and first_name="{first_name}"'
+        elif days_delayed!='':
+            out= f'<h1>Users that have Delayed and not returned books in this Library with delay days >= {days_delayed} </h1>'
+            sql= f'select distinct(username), first_name, last_name from delayed_not_returned_user_book where address="{address}" and DATEDIFF(CURDATE(), start_date) - 7 >= {days_delayed}'
+        else:
+            return "Error: Nothing was submitted. Please input exactly one field"
+    else:
+        out = f'<h1>Users that have Delayed and not returned books in this Library </h1>'
+        sql = f'select distinct(username), first_name, last_name from delayed_not_returned_user_book where address="{address}"'
+    cursor.execute(sql)
+    users = cursor.fetchall()
+    for user in users:
+        username, first_name, last_name = user
+        cursor.execute(f"select max(DATEDIFF(CURDATE(), start_date) - 7) from delayed_not_returned_user_book where username='{username}' and address='{address}'")
+        max_delay = cursor.fetchall()[0][0]
+        out += f'username= {username}, name = {first_name} {last_name}, days of delay (max among delayed books) = {max_delay} <br>'
+    return render_template('delayed-search.html') + out

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title> Delayed Search </title>
+        <style>
+            body{
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            
+            form {
+                background-color: #cfd3ce;
+                padding: 2em;
+            }
+
+            label {
+                font-size: 0.8em;
+            }
+            input[type=text], input[type=password]{
+                width: 100%;
+                padding: 1em;
+                border: 1px solid #bbbbbb;
+                border-radius: 5px;
+                margin-top: 1em;
+                box-sizing: border-box;
+           }
+
+
+           input[type=submit]{
+                background-color: #34626C;
+                font-size:  1.2em;
+                color: white;
+           }
+
+        </style>
+    </head>
+
+    <body>
+        <form method='post' onsubmit="return(validate());">
+            <fieldset>
+                <legend> Find users that have delayed and not returned books (one filter only) </legend>
+                
+                <label for="last"> Last Name </label>
+                <input type="text" id="last" name="last"> <br>
+
+                <label for="first"> First Name </label>
+                <input type="text" id="first" name="first"> <br>
+
+                <label for="delay"> days of delay >= </label>
+                <input type="number" id="delay" name="delay"> <br>
+                
+                <input type="submit" value="Submission">
+            </fieldset>
+        </form>
+
+    </body>
+
+        <script>
+         
+            function validate(){
+                // check 1 filter 
+                var delay = document.querySelector("#delay").value;
+                if (delay !='' && delay<0){
+                    alert("Please give a valid delay number");
+                    return false;
+                }
+                return true;
+                
+            }   
+
+    
+        </script>
+    
+  
+</html>
