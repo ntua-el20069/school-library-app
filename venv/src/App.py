@@ -227,10 +227,14 @@ def notApprovedUser(username):
                 out += lib[0] + '<br>'
     return render_template('not-approved-user.html', username=username) + out
 
-@app.route('/notApprovedReviews')
-def not_approved_reviews_route():
+@app.route('/librarian/<username>/notApprovedReviews')
+def not_approved_reviews_route(username):
     if not is_internal_request(): abort(401)
-    return notApprovedReviews(db)
+    cursor = db.cursor()
+    sql = "select address from User where username='{}'".format(username)
+    cursor.execute(sql)
+    address = cursor.fetchall()[0][0]
+    return notApprovedReviews(db, address)
 
 @app.route('/notValidLibrarians')
 def notValidLibrarians():
@@ -295,6 +299,15 @@ def year_month_borrowings():
 def simple_user(type, username):
     if not is_internal_request(): abort(401)
     return render_template('simple-user.html', type=type, username=username)
+
+@app.route("/<username>/books-in-this-school-review")
+def books_in_this_school_review(username):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    q = "select address from User where username='{}'".format(username)
+    cursor.execute(q)
+    address = cursor.fetchall()[0][0]
+    return books_review(db, username, address)
 
 @app.route("/simple-user/<type>/<username>/books-borrowed")
 def books_borrowed_route(type, username):
@@ -474,10 +487,21 @@ def review_route(username, ISBN):
     if not is_internal_request(): abort(401)
     return review(db, username, ISBN)
 
+'''
 @app.route('/accept-review', methods=['GET', 'POST'])
 def accept_review_route():
     if not is_internal_request(): abort(401)
     return accept_review(db)
+'''
+
+@app.route('/librarian/<username>/accept-review', methods=['GET', 'POST'])
+def accept_review_route(username):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    sql = "select address from User where username='{}'".format(username)
+    cursor.execute(sql)
+    address = cursor.fetchall()[0][0]
+    return accept_review(db, username, address)
 
 @app.route('/<username>/books-in-this-school')
 def books_in_this_school_route(username):

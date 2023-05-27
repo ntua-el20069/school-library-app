@@ -22,7 +22,7 @@
 </body>
 <script>
     listRoot = document.getElementById('notApprovedReviews')
-    fetch('/notApprovedReviews')
+    fetch('/librarian/{{username}}/notApprovedReviews')
         .then(response => response.json())
         .then(Reviews => {
             console.log(Reviews); 

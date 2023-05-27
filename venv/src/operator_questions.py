@@ -114,3 +114,5 @@ def delayed_not_returned_search(db, address):
         max_delay = cursor.fetchall()[0][0]
         out += f'username= {username}, name = {first_name} {last_name}, days of delay (max among delayed books) = {max_delay} <br>'
     return render_template('delayed-search.html') + out
+
+# 4.2.3.Average Ratings per borrower and category (Search criteria: user/category)

@@ -110,7 +110,17 @@ def books_in_this_school(db, address, username):
     cursor.execute(sql)
     books = cursor.fetchall()
     for book in books:
-        if book: out += "Title: {}, ISBN: {}  <a href='/librarian/{}/{}/update-book'>Update book info</a><br>".format(book[0], book[1], username, book[1])
+        if book: out += "Title: {}, ISBN: {}  <a href='/librarian/{}/{}/update-book'>Update book info</a>  <br>".format(book[0], book[1], username, book[1])
+    return out
+
+def books_review(db, username, address):
+    out = 'Books in this School <br><br><br>'
+    cursor = db.cursor()
+    sql = "select title, B.ISBN from Book B, Available A where B.ISBN=A.ISBN and A.address='{}';".format(address)
+    cursor.execute(sql)
+    books = cursor.fetchall()
+    for book in books:
+        if book: out += "Title: {}, ISBN: {}  <a href='/{}/{}/review'> Review </a>  <br>".format(book[0], book[1], username, book[1], username, book[1])
     return out
 
 def add_existing_book(db, address):
@@ -155,9 +165,10 @@ def ValidUsers(db, lib_username, valid_bool): # call it with 1 for valid users a
         Users = cursor.fetchall()
         return jsonify(Users=Users)
     
-def notApprovedReviews(db):
+def notApprovedReviews(db, address):
     cursor = db.cursor()
-    sql = "select username, ISBN, likert, review_text from Review where approval=0"
+    sql = f"""select username, ISBN, likert, review_text from Review where approval=0
+                and username in (select username from User where address="{address}")"""
     cursor.execute(sql)
     Reviews = cursor.fetchall()
     return jsonify(Reviews=Reviews)

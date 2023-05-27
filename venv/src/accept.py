@@ -78,10 +78,11 @@ def accept_users(db, lib_username):
     else:
         return render_template('accept-users.html', lib_username=lib_username)
     
-def accept_review(db):
+def accept_review(db, username, address):
     if request.method == 'POST':
         cursor = db.cursor()
-        cursor.execute("select username, ISBN from Review where approval=0")
+        
+        cursor.execute(f"""select U.username, ISBN from Review R, User U where U.username=R.username and approval=0 and address="{address}" """)
         notValidReviews = cursor.fetchall()
         print(notValidReviews)
         out = ''
@@ -101,7 +102,7 @@ def accept_review(db):
                 
         return out
     else:
-        return render_template('accept-reviews.html') 
+        return render_template('accept-reviews.html', username=username) 
 
 def insert_school(db):
     if not is_internal_request(): abort(401)
