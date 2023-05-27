@@ -9,23 +9,57 @@ from datetime import datetime, timedelta
 # 4.1.1.List with the total number of loans per school (Search criteria: year, calendar month, e.g.January)
 def borrowings_per_school_year_month(db):
     out = ''
+    cursor = db.cursor()
     if request.method == 'POST':
         year = request.form.get('year')
         month = request.form.get('month')
-        cursor = db.cursor()
+        
         # for year only
         if month=='':
-            out = f'<h1>Borrowings in each school in year {year}</h1>'
+            out1 = f'<h1>Borrowings in each school in year {year}</h1>'
             sql = f"select name, address, number from borrowings_per_school_year where year={year}"
+            cursor.execute(sql)
+            schools = cursor.fetchall()
+            
+            out2 = f'<h1>schools with 0 borrowings in year {year}</h1>'
+            sql = f"""select name, address  from School_Library WHERE address NOT IN (
+                      select distinct(address) from borrowings_per_school_year where year={year})"""
+            cursor.execute(sql)
+            not_borrowed_schools = cursor.fetchall()
+
         # for year and month
         else:
-            out = f'<h1>Borrowings in each school in month {month} of year {year}</h1>'
+            out1 = f'<h1>Borrowings in each school in month {month} of year {year}</h1>'
             sql = f"select name, address, number from borrowings_per_school_year_month where year={year} and month={month}"
+            cursor.execute(sql)
+            schools = cursor.fetchall()
+            
+            out2 = f'<h1>schools with 0 borrowings in month {month} of year {year}</h1>'
+            sql = f"""select name, address  from School_Library WHERE address NOT IN (
+                      select distinct(address) from borrowings_per_school_year_month where year={year} and month={month})"""
+            cursor.execute(sql)
+            not_borrowed_schools = cursor.fetchall()
+    else: # handle GET request
+        # query if you want to get all including 0
+        # select S.address, IFNULL(count(B.address),0) from School_Library S left join Borrowing B on S.address=B.address group by S.address;
+        out1 = f'<h1>Borrowings in each school (in all years)</h1>'
+        sql = "select name, B.address as address, count(*) as number from Borrowing B, School_Library S where B.address=S.address group by name, address order by number desc"
         cursor.execute(sql)
         schools = cursor.fetchall()
-        for school in schools:
-            name, address, number = school
-            out += f'{name} &emsp; {address} Borrowings = {number}<br>'     
+
+        out2 = f'<h1>schools with 0 borrowings in all years</h1>'
+        sql = f"""select name, address  from School_Library WHERE address NOT IN (
+                    select distinct(B.address) from Borrowing B, School_Library S where B.address=S.address)"""
+        cursor.execute(sql)
+        not_borrowed_schools = cursor.fetchall()
+
+    for school in schools:
+        name, address, number = school
+        out1 += f'{name} &emsp; {address} Borrowings = {number}<br>' 
+    for school in not_borrowed_schools:
+        name, address = school
+        out2 += f'{name} &emsp; {address} Borrowings = 0<br>' 
+    out = out1 + out2
     return render_template('year-month-admin.html') + out
 
 

@@ -444,7 +444,16 @@ def books_simple_user_route(username, type):
     sql = "select address from User where username='{}'".format(username)
     cursor.execute(sql)
     address = cursor.fetchall()[0][0]
-    return books_in_library(db, address, True) # set parameter simple_user = True
+    return books_in_library(db, address, True, type, username) # set parameter simple_user = True
+
+@app.route('/simple-user/<type>/<username>/books-in-library/reserve-book/<ISBN>', methods = ['GET', 'POST'] )
+def reserve_book_route(username, type, ISBN):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    sql = "select address from User where username='{}'".format(username)
+    cursor.execute(sql)
+    address = cursor.fetchall()[0][0]
+    return reserve_book(db, username, address, ISBN)
 
 @app.route('/<username>/books-in-system')
 def books_in_system_route(username):

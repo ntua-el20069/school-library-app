@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reserve book </title>
+</head>
+<body>
+    <form method="post">
+        <h2> Are you sure you want to reserve book with: title = {{title}} ISBN = {{ISBN}} ? </h2> <br>
+        <label for="reserve">yes</label>
+        <input type="radio" id="reserve" name="reserve" value="yes" checked>
+        <label for="noreserve">no</label>
+        <input type="radio" id="noreserve" name="reserve" value="no">
+        <p>Reminder: Reservation is not allowed when:
+            <ul>
+                <li>you have already reserved this book this week</li>
+                <li>you have borrowed (and not returned) this book </li>
+                <li>you have delayed borrowed not returned books</li>
+                <li>you have already reserved 1 / 2 book(s) for teachers/students </li>
+            </ul>
+        </p>
+        <input type="submit" value="Continue">
+    </form>
+</body>
+</html>

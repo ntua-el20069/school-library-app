@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 # 4.2.1. All books by Title, Author (Search criteria: title/ category/ author/ copies).
 # Also there is a a part of simple user question
 #              4.3.1.List with all books (Search criteria: title/category/author)
-def books_in_library(db, address, simple_user = False):
+def books_in_library(db, address, simple_user = False, type='librarian', username=''):
     out = ''
     cursor = db.cursor()
     order = 'title'
@@ -76,7 +76,8 @@ def books_in_library(db, address, simple_user = False):
             cursor.execute(sql)
             topics = ', '.join([c[0] for c in cursor.fetchall()])
             # ...
-            out += f'ISBN = {ISBN} title = {title}<br> Authors: {authors} <br> Topics: {topics} <br> <img src="{image}" width="200px"> <br><br>'     
+            link_reserve = f'<a href="/simple-user/{type}/{username}/books-in-library/reserve-book/{ISBN}">Reserve book</a><br>' if simple_user else ''
+            out += f'ISBN = {ISBN} title = {title}<br> Authors: {authors} <br> Topics: {topics} <br> <img src="{image}" width="200px"> {link_reserve} <br><br>'     
     except ValueError as err:
         print(err)
         return "Not found!"

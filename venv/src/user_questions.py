@@ -11,6 +11,28 @@ from datetime import datetime, timedelta
 # The list is solved in def (function) books_in_library which is in operator_questions.py
 # Here this part of the question is implemented:
 # ability to  select a book and create a reservation request
+def reserve_book(db, username, address, ISBN):
+    cursor = db.cursor()
+    sql = f"select title from Book where ISBN='{ISBN}'"
+    cursor.execute(sql)
+    title = cursor.fetchall()[0][0]
+    if request.method == 'POST':
+        confirm = request.form.get('reserve')
+        if confirm=='no': return 'reservation was denied by user'
+        try:
+            cursor.execute("call DeletePastReservations()")
+            db.commit()
+            sql = f"insert into Reservation values ('{username}','{address}', '{ISBN}', CURDATE())"
+            cursor.execute(sql)
+            db.commit()
+            return 'Book is now reserved by you!'
+        except mysql.connector.Error as err:
+            print(err)
+            error_msg = f"Error while reserving the book: <br> {err} <br>"
+            if 'Duplicate' in error_msg:
+                error_msg += 'That means that you have already reserved this book this week <br>'
+            return error_msg
+    return render_template('reserve-book.html', ISBN=ISBN, title=title)
 
 ### Question 4.3.2 List of all books borrowed by this user
 def books_borrowed(db, username):

@@ -259,16 +259,18 @@ from Topic A, Topic B
  order by frequency DESC);
 
  create view borrowings_per_school_year as
- (select B.address as address, name, city, year(start_date) as year, count(*) as number
- from Borrowing B, School_Library S 
- where B.address=S.address 
- group by address, name, city, year);
+ (select S.address as address, name, city, year(start_date) as year, IFNULL(count(B.address),0) as number
+ from School_Library S 
+ left join Borrowing B  on B.address=S.address
+ group by address, name, city, year
+ order  by number desc);
 
 create view borrowings_per_school_year_month as
- (select B.address as address, name, city, year(start_date) as year, month(start_date) as month, count(*) as number
- from Borrowing B, School_Library S 
- where B.address=S.address 
- group by address, name, city, year, month);
+ (select S.address as address, name, city, year(start_date) as year, month(start_date) as month, IFNULL(count(B.address),0) as number
+ from School_Library S 
+ left join Borrowing B  on B.address=S.address 
+ group by address, name, city, year, month
+ order  by number desc);
 
 
 
