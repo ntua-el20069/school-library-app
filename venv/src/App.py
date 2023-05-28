@@ -236,6 +236,15 @@ def not_approved_reviews_route(username):
     address = cursor.fetchall()[0][0]
     return notApprovedReviews(db, address)
 
+@app.route('/librarian/<username>/ratings', methods=['GET', 'POST'])
+def ratings_route(username):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    sql = "select address from User where username='{}'".format(username)
+    cursor.execute(sql)
+    address = cursor.fetchall()[0][0]
+    return avg_ratings(db, address)
+
 @app.route('/notValidLibrarians')
 def notValidLibrarians():
     if not is_internal_request(): abort(401)
@@ -307,7 +316,7 @@ def books_in_this_school_review(username):
     q = "select address from User where username='{}'".format(username)
     cursor.execute(q)
     address = cursor.fetchall()[0][0]
-    return books_review(db, username, address)
+    return books_for_user(db, username, address)
 
 @app.route("/simple-user/<type>/<username>/books-borrowed")
 def books_borrowed_route(type, username):

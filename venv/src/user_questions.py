@@ -45,6 +45,6 @@ def books_borrowed(db, username):
     for borrowing in borrowings:
         #username, address, ISBN, start_date, type, first_name, last_name, title,  returned, librarian = borrowing
         ISBN, title, times = borrowing
-        out += f"ISBN = {ISBN}, title = {title}, times = {times} <br>"
+        out += f"ISBN = {ISBN}, title = {title}, times = {times} <a href='/{username}/{ISBN}/review'> Review </a> <br>"
         #out += f'username = {username}, type = {type}, address = {address} <br> name = {first_name} {last_name}, <br> address = {address} , ISBN = {ISBN}, title = {title} <br> &emsp; start_date = {start_date}, returned = {bool(returned)}, librarian = {librarian} <br><br>'
     return out

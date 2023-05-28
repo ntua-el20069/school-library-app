@@ -165,7 +165,7 @@ create view max_books_written as
 (select max(books_written) from author_num_books);
 
 create view review_book_topic as
-(select username, B.ISBN, topic, likert from review R, book B, topic T  where R.ISBN=B.ISBN and B.ISBN=T.ISBN);
+(select username, B.ISBN, topic, likert from review R, book B, topic T  where R.ISBN=B.ISBN and B.ISBN=T.ISBN and approval=1);
 
 create view this_year_borrowings as 
 (select * from Borrowing where start_date > DATE_SUB(CURDATE(), INTERVAL 1 YEAR));
@@ -304,7 +304,7 @@ create view frequent_authors as
 -- Average Ratings per borrower and category (Search criteria: user/category)
 -- per borrower:
 create view avg_borrower_rating as 
-(select username, avg(likert) as avg_likert from Review group by username);
+(select username, avg(likert) as avg_likert from Review where approval=1 group by username);
 -- per category-topic:
 create view avg_category_rating as
 (select topic, avg(likert) as avg_likert from review_book_topic group by topic);
@@ -315,14 +315,19 @@ CREATE TRIGGER `borrow` AFTER INSERT ON `Borrowing` FOR EACH ROW BEGIN
     declare books int;
     declare bor_num int;
     declare bor_type varchar(20);
+    declare delayed_and_not_returned int;
     IF @var_trigger IS NULL OR @var_trigger = 1 THEN
         select books_number into books from Available A where A.ISBN=new.ISBN and A.address=new.address;
         select count(*) into bor_num from Borrowing where username = NEW.username and DATE_SUB(CURDATE(), INTERVAL 7 DAY) < start_date;
         select type into bor_type from User where username = NEW.username;
+        select count(*) into delayed_and_not_returned from Borrowing where username = NEW.username and returned=0 and DATE_ADD(start_date, INTERVAL 7 DAY) < CURDATE();
         IF books=0 then
             -- ??? here I should insert it into Reservation ? no use try-except in Python .. and insert to Reservation
             SIGNAL SQLSTATE '45000' 
                 SET MESSAGE_TEXT = 'Borrowing is not allowed (book is not available).';
+        ELSEIF (delayed_and_not_returned > 0) then
+            SIGNAL SQLSTATE '45000' 
+                SET MESSAGE_TEXT = 'Borrowing is not allowed (when there are delayed not returned books).';
         ELSEIF (bor_type='student' and bor_num >= 3) then
             SIGNAL SQLSTATE '45000' 
                 SET MESSAGE_TEXT = 'Borrowing is not allowed (students can borrow only 2 books per week).';

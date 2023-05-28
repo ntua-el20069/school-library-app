@@ -116,3 +116,41 @@ def delayed_not_returned_search(db, address):
     return render_template('delayed-search.html') + out
 
 # 4.2.3.Average Ratings per borrower and category (Search criteria: user/category)
+def avg_ratings(db, address):
+    out = ''
+    out1 = ''
+    out2 = ''
+    cursor = db.cursor()
+    if request.method == 'POST':
+        topic = request.form.get('topic')
+        username = request.form.get('username')
+        if username!='':
+            cursor.execute(f"select * from User where username='{username}' and address='{address}'")
+            if not cursor.fetchall():
+                return "User is not in this school"
+            out1 = f'<h1>Average rating for user: {username}</h1>'
+            sql1 = f'select username, avg_likert from avg_borrower_rating where username="{username}"'
+        elif topic!='':
+            out2 = f'<h1>Average rating for topic: {topic} (counting reviews from all schools)</h1>'
+            sql2 = f'select topic, avg_likert from avg_category_rating where topic="{topic}"'
+        else:
+            return "Please input exactly one of the fields"
+    else:
+        out1 = f'<h1>Average rating per user in this school</h1>'
+        sql1 = f'select username, avg_likert from avg_borrower_rating where username in (select username from User where address="{address}")'
+        out2 = f'<h1>Average topic rating (counting reviews from all schools)</h1>'
+        sql2 = f'select topic, avg_likert from avg_category_rating'
+    if out1:
+        cursor.execute(sql1)
+        ratings_per_user = cursor.fetchall()
+        for rating in ratings_per_user:
+            username, avg_likert = rating 
+            out1 += f'username: {username}, average likert rating: {avg_likert} <br>'
+    if out2:
+        cursor.execute(sql2)
+        ratings_per_topic = cursor.fetchall()
+        for rating in ratings_per_topic:
+            topic, avg_likert = rating 
+            out2 += f'username: {topic}, average likert rating: {avg_likert} <br>'
+    out = out2 + out1
+    return render_template('ratings.html') + out
