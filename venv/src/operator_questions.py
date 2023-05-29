@@ -77,7 +77,7 @@ def books_in_library(db, address, simple_user = False, type='librarian', usernam
             topics = ', '.join([c[0] for c in cursor.fetchall()])
             # ...
             link_reserve = f'<a href="/simple-user/{type}/{username}/books-in-library/reserve-book/{ISBN}">Reserve book</a><br>' if simple_user else ''
-            out += f'ISBN = {ISBN} title = {title}<br> Authors: {authors} <br> Topics: {topics} <br> <img src="{image}" width="200px"> {link_reserve} <br><br>'     
+            out += f'ISBN = {ISBN} title = {title}<br> Authors: {authors} <br> Topics: {topics} <br> <img src="{image}" width="200px"> Available copies: {books_number}  {link_reserve} <br><br>'     
     except ValueError as err:
         print(err)
         return "Not found!"

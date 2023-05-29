@@ -54,6 +54,27 @@ def accept_librarians(db):
             out += f"address: {tup[0]} librarian: {tup[1]}<br>"
         return render_template('accept-librarians.html') + out
     
+def disable_librarians(db):
+    if request.method == 'POST':
+        cursor = db.cursor()
+        cursor.execute("select username, address from User where type='librarian' and valid=1")
+        ValidLibrarians = cursor.fetchall()
+        out = ''
+        for lib in ValidLibrarians:
+            mode = request.form.get(lib[0])
+            if mode=='disable': 
+                try:
+                    sql_query = "update User set valid=0 where username='{}'".format(lib[0])
+                    cursor.execute(sql_query)
+                    db.commit()
+                    out += lib[0] + ' disabled <br>'
+                except mysql.connector.Error as err:
+                    print("Something went wrong: ", err)
+                    return 'Update Error <br> '
+        return out
+    else:
+        return render_template('disable-librarians.html') 
+
 def accept_users(db, lib_username):
     if not is_internal_request(): abort(401)
     if request.method == 'POST':

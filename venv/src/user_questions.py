@@ -32,7 +32,7 @@ def reserve_book(db, username, address, ISBN):
             if 'Duplicate' in error_msg:
                 error_msg += 'That means that you have already reserved this book this week <br>'
             return error_msg
-    return render_template('reserve-book.html', ISBN=ISBN, title=title)
+    return render_template('reserve-book.html', ISBN=ISBN, title=title, username=username)
 
 ### Question 4.3.2 List of all books borrowed by this user
 def books_borrowed(db, username):

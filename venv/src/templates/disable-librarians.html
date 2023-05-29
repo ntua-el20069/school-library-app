@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>disable librarians</title>
+    <style>
+        label[for=disable]{
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1> valid Librarians </h1>
+    <form method="post">
+        <ul id="ValidLibrarians">
+            <!-- Here will be positioned the ValidLibrarians with  inputs-->
+        </ul>
+        <input type="submit" value="Disable selected librarians">
+        </form>
+</body>
+<script>
+    let ValidLibs = document.getElementById('ValidLibrarians')
+    fetch('/ValidLibrarians')
+        .then(response => response.json())
+        .then(ValidLibrarians => {
+            console.log(ValidLibrarians); 
+            const myList = ValidLibrarians.ValidLibrarians.map(item => item);
+            console.log(myList); 
+            for (let lib of myList){
+            let option = document.createElement("li");
+            option.value = lib;
+            option.textContent = lib[0]  + ' ' + lib[1] + ' School: ' + lib[2];
+            
+            let labelDisable = document.createElement('label');
+            labelDisable.setAttribute('for', 'disable')
+            labelDisable.textContent = 'disable';
+
+            let disable = document.createElement("input");
+            disable.setAttribute('type','radio');
+            disable.setAttribute('name', lib[0]);
+            disable.setAttribute('value','disable');
+            
+            option.appendChild(disable);
+            option.appendChild(labelDisable);
+            
+            ValidLibs.appendChild(option);
+        }
+        });
+</script>
+</html>

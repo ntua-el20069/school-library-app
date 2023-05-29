@@ -70,7 +70,7 @@ def get_borrowings_list(db, borrower):
 
 def get_reservations_list(db, reservant):
     cursor = db.cursor()
-    sql = f"select username, address, ISBN, start_date, type, first_name, last_name, title from reservation_user_book where username='{reservant}'"
+    sql = f"select username, R.address, R.ISBN, start_date, type, first_name, last_name, title, books_number from reservation_user_book R, Available A where username='{reservant}' and R.address=A.address and R.ISBN=A.ISBN"
     cursor.execute(sql)
     userReservations = cursor.fetchall()
     return jsonify(userReservations=userReservations)

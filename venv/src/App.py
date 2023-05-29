@@ -259,10 +259,23 @@ def notValidLibrarians():
     
     return jsonify(notValidLibrarians=notValidLibrarians) 
 
+@app.route('/ValidLibrarians')
+def ValidLibrarians():
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    cursor.execute("SELECT username, type, address FROM User  where valid=1 and type='librarian';")
+    ValidLibrarians = cursor.fetchall()
+    return jsonify(ValidLibrarians=ValidLibrarians) 
+
 @app.route('/accept-librarians', methods=['GET', 'POST'])
 def accept_libs_route():
     if not is_internal_request(): abort(401)
     return accept_librarians(db)
+
+@app.route('/disable-librarians', methods=['GET', 'POST'])
+def disable_libs_route():
+    if not is_internal_request(): abort(401)
+    return disable_librarians(db)
 
 @app.route('/<username>/admin')
 def admin(username):
@@ -307,7 +320,11 @@ def year_month_borrowings():
 @app.route("/simple-user/<type>/<username>")
 def simple_user(type, username):
     if not is_internal_request(): abort(401)
-    return render_template('simple-user.html', type=type, username=username)
+    cursor = db.cursor()
+    q = "select address, name from user_school where username='{}'".format(username)
+    cursor.execute(q)
+    address, name = cursor.fetchall()[0]
+    return render_template('simple-user.html', type=type, username=username, address=address, name=name)
 
 @app.route("/<username>/books-in-this-school-review")
 def books_in_this_school_review(username):
@@ -344,9 +361,9 @@ def update_user_route(username):
 def librarian(username):
     if not is_internal_request(): abort(401)
     cursor = db.cursor()
-    q = "select address from User where username='{}'".format(username)
+    q = "select address, name from user_school where username='{}'".format(username)
     cursor.execute(q)
-    address = cursor.fetchall()[0][0]
+    address, name = cursor.fetchall()[0]
     if request.method == 'POST':
         borrower = request.form.get("borrower")
         reservant = request.form.get("reservant")
@@ -358,7 +375,7 @@ def librarian(username):
             return redirect(f'/librarian/{username}/user-reservations/{reservant}')
     else:
         if address:
-            return render_template("librarian.html", username=username, address=address)
+            return render_template("librarian.html", username=username, address=address, name=name)
         else:
             return 'An error occured!'
 
@@ -402,7 +419,7 @@ def delayed_not_returned_route(username):
 def user_borrowings_route(username, borrower):
     if not is_internal_request(): abort(401)
     cursor = db.cursor()
-    sql = f"select * from User U, User L where L.username='{username}' and U.username='{borrower}' and L.address=U.address"
+    sql = f"select * from User U, User L where L.username='{username}' and U.username='{borrower}' and L.address=U.address "
     cursor.execute(sql)
     if  not cursor.fetchall(): return 'This user is not in this school! <br>'
     return user_borrowings(db, borrower)
@@ -411,9 +428,9 @@ def user_borrowings_route(username, borrower):
 def user_reservations_route(username, reservant):
     if not is_internal_request(): abort(401)
     cursor = db.cursor()
-    sql = f"select * from User U, User L where L.username='{username}' and U.username='{reservant}' and L.address=U.address"
+    sql = f"select * from User U, User L where L.username='{username}' and U.username='{reservant}' and L.address=U.address and U.valid=1"
     cursor.execute(sql)
-    if  not cursor.fetchall(): return 'This user is not in this school! <br>'
+    if  not cursor.fetchall(): return 'This user is not in this school or is not approved yet! <br>'
     return user_reservations(db, reservant, username)
 
 @app.route('/<borrower>/get-borrowings-list')
@@ -425,6 +442,15 @@ def get_borrowings_list_route(borrower):
 def get_reservations_list_route(reservant):
     if not is_internal_request(): abort(401)
     return get_reservations_list(db, reservant)
+
+@app.route('/librarian/<librarian>/borrow-username-title', methods=['GET', 'POST'])
+def borrow_username_title_route(librarian):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    q = "select address from User where username='{}'".format(librarian)
+    cursor.execute(q)
+    address = cursor.fetchall()[0][0]
+    return borrow_username_title(db, librarian, address)
 
 @app.route('/librarian/<librarian>/borrow-book/<username>/<ISBN>',  methods=['GET', 'POST'])
 def borrow_book_route(librarian, username, ISBN):
@@ -508,6 +534,20 @@ def reserve_book_route(username, type, ISBN):
     cursor.execute(sql)
     address = cursor.fetchall()[0][0]
     return reserve_book(db, username, address, ISBN)
+
+@app.route('/librarian/<librarian>/books-in-library/reserve-book/<username>/<ISBN>', methods = ['GET', 'POST'])
+def reserve_book_from_librarian_route(librarian, username, ISBN):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    sql = "select address from User where username='{}'".format(username)
+    cursor.execute(sql)
+    address = cursor.fetchall()[0][0]
+    return reserve_book(db, username, address, ISBN)
+
+@app.route('/simple-user/<type>/<username>/reservations-cancel', methods = ['GET', 'POST'])
+def user_reservations_cancel_route(username, type):
+    if not is_internal_request(): abort(401)
+    return user_reservations_cancel(db, username)
 
 @app.route('/<username>/books-in-system')
 def books_in_system_route(username):

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Reservations</title>
     <style>
-        label[for=borrow]{
+        label[for=cancel]{
             color: rgb(95, 1, 114);
         }
     </style>
@@ -15,13 +15,14 @@
     <h1> User Reservations (username: {{reservant}})  </h1>
     <form method="post">
         <ul id="userReservations">
-            <!-- Here will be positioned the userReservations with borrow inputs-->
+            <!-- Here will be positioned the userReservations with cancel inputs-->
         </ul>
-        <input type="submit" value="borrow selected book (choose only one)">
+        <input type="submit" value="cancel selected books ">
         </form>
 </body>
 <script>
     // change this....
+    
     listRoot = document.getElementById('userReservations')
     fetch('/{{reservant}}/get-reservations-list')
         .then(response => response.json())
@@ -33,24 +34,24 @@
             for (let reservation of myList){
             let option = document.createElement("li");
             option.value = reservation;
-            [username, address, ISBN, dateString, type, first_name, last_name, title] = reservation; 
+            [username, address, ISBN, dateString, type, first_name, last_name, title, books_number] = reservation; 
             // I have to make the start_date like a date... and no timestamp
             const dateObj = new Date(dateString);
             const start_date = dateObj.toISOString().split('T')[0];
-            option.innerHTML = `username = ${username}, type = ${type}, <br> name = ${first_name} ${last_name}, <br> address = ${address} , ISBN = ${ISBN}, title = ${title} <br> &emsp; start_date = ${start_date} <br>`
+            option.innerHTML = `username = ${username}, type = ${type}, <br> name = ${first_name} ${last_name}, <br> address = ${address} , ISBN = ${ISBN}, title = ${title} <br> &emsp; start_date = ${start_date}, Available Copies = ${books_number} <br>`
             
             
-            let labelBorrow = document.createElement('label');
-            labelBorrow.setAttribute('for', 'borrow')
-            labelBorrow.textContent = 'borrow';
+            let labelCancel = document.createElement('label');
+            labelCancel.setAttribute('for', 'cancel')
+            labelCancel.textContent = 'cancel';
 
-            let borrowInput = document.createElement("input");
-            borrowInput.setAttribute('type','radio');
-            borrowInput.setAttribute('name', ISBN);
-            borrowInput.setAttribute('value','borrow');
+            let cancelInput = document.createElement("input");
+            cancelInput.setAttribute('type','radio');
+            cancelInput.setAttribute('name', ISBN);
+            cancelInput.setAttribute('value','cancel');
 
-            option.appendChild(borrowInput);
-            option.appendChild(labelBorrow);
+            option.appendChild(cancelInput);
+            option.appendChild(labelCancel);
     
             listRoot.appendChild(option);
         }

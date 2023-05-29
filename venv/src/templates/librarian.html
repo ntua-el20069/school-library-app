@@ -12,7 +12,7 @@
     <a href="{{username}}/accept-users">View not valid simple users (students, teachers)</a><br>
     <a href="{{username}}/disable-users" style="color: red;">View valid users (if you want to disable...)</a> <br>
     <h2>Librarian: {{username}}</h2>
-    <h3> in school with address: {{address}}</h3>
+    <h3> in school :{{name}} {{address}}</h3>
     <a href="/{{username}}/books-in-system">Books in the  library-network System (You can Review them)</a><br>
     <a href="/{{username}}/books-in-this-school"> Books in this school (and maybe update some of them)</a> <br>
     <a href="{{username}}/insert-book"> Insert Book (if it is not in the two categories above)</a><br>
@@ -32,6 +32,7 @@
         <legend> Borrowings </legend>
         <a href="/librarian/{{username}}/all-borrowings">All</a><br>
         <a href="/librarian/{{username}}/delayed-not-returned">Delayed and not returned</a><br>
+        <a href="/librarian/{{username}}/borrow-username-title">Register a borrowing searching username and title</a><br>
         <p>Find a user's borrowings (press the button find after you insert username) (and register return)</p>
         <label for="borrower">username: </label>
         <input type="text" id="borrower" name="borrower">

@@ -67,26 +67,44 @@ def user_borrowings(db, borrower):
         return render_template('user-borrowings.html', borrower=borrower)
         
 def user_reservations(db, reservant, librarian):
+    cursor = db.cursor()
+    out = f'<h1> User Reservations (username: {reservant})  </h1>'
+    sql = "call DeletePastReservations()"
+    cursor.execute(sql)
+    db.commit()
+    sql = f"select username, R.address, R.ISBN, start_date, type, first_name, last_name, title, books_number from reservation_user_book R, Available A where username='{reservant}' and R.address = A.address and R.ISBN = A.ISBN"
+    cursor.execute(sql)
+    reservations = cursor.fetchall()
+    for res in reservations:
+        username, address, ISBN, start_date, type, first_name, last_name, title, books_number = res
+        out += f""" username = {username}, type = {type} <br> name = {first_name} {last_name} <br>
+        address = {address}, start_date = {start_date} <br> ISBN = {ISBN}, title = {title} <br> Available copies = {books_number}
+        <a href='/librarian/{librarian}/borrow-book/{username}/{ISBN}'>Borrow</a><br><br>"""
+    return  out
+
+def borrow_username_title(db, librarian, address):
+    out = ''
     if request.method == 'POST':
         cursor = db.cursor()
-        sql = "call DeletePastReservations()"
+        username = request.form.get('username')
+        title = request.form.get('title')
+        cursor.execute(f"select * from User where username='{username}' and address='{address}' and valid=1")
+        if not cursor.fetchall():
+            return 'User is not in this school or is not approved'
+        if username!='' and title!='':
+            out += f'<h1>Books in this school with title like {title} for user {username}</h1>'
+            sql = f"select ISBN, title, books_number from book_available where address='{address}' and title like '%{title}%'"
+        elif username!='':
+            out += f'<h1>Books in this School for user {username}</h1>'
+            sql = f"select ISBN, title, books_number from book_available where address='{address}'"
+        else:
+            return "Please input at least the username"
         cursor.execute(sql)
-        db.commit()
-        sql = f"select username, address, ISBN, start_date from Reservation where username='{reservant}'"
-        cursor.execute(sql)
-        reservations = cursor.fetchall()
-        for res in reservations:
-            username, address, ISBN, start_date = res
-            print(ISBN)
-            mode = request.form.get(ISBN)
-            print(mode)
-            if mode=='borrow':
-                print(librarian)
-                return redirect(f'/librarian/{librarian}/borrow-book/{username}/{ISBN}')
-        return 'No reservation selected'            
-    else:
-        return render_template('user-reservations.html', reservant=reservant)
-    
+        for book in cursor.fetchall():
+            ISBN, title, books_number = book
+            out += f'Title: {title}, ISBN: {ISBN} <br> Available copies: {books_number} <a href="/librarian/{librarian}/borrow-book/{username}/{ISBN}"> Borrow </a><br><br>'
+    return render_template('borrow-username-title.html') + out
+
 def borrow_book(db, username, ISBN, librarian, address):
     cursor = db.cursor()
     sql = f"select title from Book where ISBN='{ISBN}'"
@@ -110,5 +128,30 @@ def borrow_book(db, username, ISBN, librarian, address):
             error_msg = f"Error while borrowing the book: <br> {err} <br>"
             if 'Duplicate' in error_msg:
                 error_msg += 'That means that you have already borrowed this book today <br>'
+            if 'available' in error_msg:
+                error_msg += f'<br><a href="/librarian/{librarian}/books-in-library/reserve-book/{username}/{ISBN}">Do you want to reserve it?</a><br>'
             return error_msg
     return render_template('borrow-book.html', username=username, ISBN=ISBN, title=title)
+
+def user_reservations_cancel(db, reservant):
+    cursor = db.cursor()
+    sql = "call DeletePastReservations()"
+    cursor.execute(sql)
+    db.commit()
+    out = ''
+    if request.method == 'POST':
+        sql = f"select username, address, ISBN, start_date from Reservation where username='{reservant}'"
+        cursor.execute(sql)
+        reservations = cursor.fetchall()
+        for res in reservations:
+            username, address, ISBN, start_date = res
+            print(ISBN)
+            mode = request.form.get(ISBN)
+            print(mode)
+            if mode=='cancel':
+                cursor.execute(f"call DeleteReservation('{username}','{address}', '{ISBN}')")
+                db.commit()
+                out += f'Reserevation of book with ISBN={ISBN} for user {reservant} was cancelled<br>'
+        return out           
+    else:
+        return render_template('user-reservations.html', reservant=reservant)
