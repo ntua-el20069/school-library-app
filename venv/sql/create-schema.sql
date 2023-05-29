@@ -325,7 +325,7 @@ CREATE TRIGGER `borrow` AFTER INSERT ON `Borrowing` FOR EACH ROW BEGIN
             -- ??? here I should insert it into Reservation ? no use try-except in Python .. and insert to Reservation
             SIGNAL SQLSTATE '45000' 
                 SET MESSAGE_TEXT = 'Borrowing is not allowed (book is not available).';
-        ELSEIF (delayed_and_not_returned > 0) then
+        ELSEIF (delayed_and_not_returned > 0) and (@var_insert IS NULL OR @var_insert = 0) then
             SIGNAL SQLSTATE '45000' 
                 SET MESSAGE_TEXT = 'Borrowing is not allowed (when there are delayed not returned books).';
         ELSEIF (bor_type='student' and bor_num >= 3) then

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borrow book  </title>
+</head>
+<body>
+    <form method="post">
+        <h2> Are you sure you want to register borrowing for book with: title = {{title}} ISBN = {{ISBN}} for user:  {{username}} ? </h2> <br>
+        <label for="borrow">yes</label>
+        <input type="radio" id="borrow" name="borrow" value="yes" checked>
+        <label for="noborrow">no</label>
+        <input type="radio" id="noborrow" name="borrow" value="no">
+        <p>Reminder: Borrowing is not allowed when:
+            <ul>
+                <li>book is not available in this school</li>
+                <li>you have delayed borrowed not returned books</li>
+                <li>you have already borrowed 1 / 2 book(s) for teachers/students </li>
+                <li>you have already borrowed this book this day</li>
+            </ul>
+        </p>
+        <input type="submit" value="Continue">
+    </form>
+</body>
+</html>

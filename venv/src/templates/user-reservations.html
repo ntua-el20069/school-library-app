@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Reservations</title>
+    <style>
+        label[for=borrow]{
+            color: rgb(95, 1, 114);
+        }
+    </style>
+</head>
+<body>
+    <h1> User Reservations (username: {{reservant}})  </h1>
+    <form method="post">
+        <ul id="userReservations">
+            <!-- Here will be positioned the userReservations with borrow inputs-->
+        </ul>
+        <input type="submit" value="borrow selected book (choose only one)">
+        </form>
+</body>
+<script>
+    // change this....
+    listRoot = document.getElementById('userReservations')
+    fetch('/{{reservant}}/get-reservations-list')
+        .then(response => response.json())
+        .then(userReservations => {
+            console.log(userReservations); 
+            const myList = userReservations.userReservations.map(item => item);
+            
+            console.log(myList); 
+            for (let reservation of myList){
+            let option = document.createElement("li");
+            option.value = reservation;
+            [username, address, ISBN, dateString, type, first_name, last_name, title] = reservation; 
+            // I have to make the start_date like a date... and no timestamp
+            const dateObj = new Date(dateString);
+            const start_date = dateObj.toISOString().split('T')[0];
+            option.innerHTML = `username = ${username}, type = ${type}, <br> name = ${first_name} ${last_name}, <br> address = ${address} , ISBN = ${ISBN}, title = ${title} <br> &emsp; start_date = ${start_date} <br>`
+            
+            
+            let labelBorrow = document.createElement('label');
+            labelBorrow.setAttribute('for', 'borrow')
+            labelBorrow.textContent = 'borrow';
+
+            let borrowInput = document.createElement("input");
+            borrowInput.setAttribute('type','radio');
+            borrowInput.setAttribute('name', ISBN);
+            borrowInput.setAttribute('value','borrow');
+
+            option.appendChild(borrowInput);
+            option.appendChild(labelBorrow);
+    
+            listRoot.appendChild(option);
+        }
+        })
+        
+</script>
+</html>

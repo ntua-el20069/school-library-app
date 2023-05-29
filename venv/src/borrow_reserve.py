@@ -66,5 +66,49 @@ def user_borrowings(db, borrower):
     else:
         return render_template('user-borrowings.html', borrower=borrower)
         
+def user_reservations(db, reservant, librarian):
+    if request.method == 'POST':
+        cursor = db.cursor()
+        sql = "call DeletePastReservations()"
+        cursor.execute(sql)
+        db.commit()
+        sql = f"select username, address, ISBN, start_date from Reservation where username='{reservant}'"
+        cursor.execute(sql)
+        reservations = cursor.fetchall()
+        for res in reservations:
+            username, address, ISBN, start_date = res
+            print(ISBN)
+            mode = request.form.get(ISBN)
+            print(mode)
+            if mode=='borrow':
+                print(librarian)
+                return redirect(f'/librarian/{librarian}/borrow-book/{username}/{ISBN}')
+        return 'No reservation selected'            
+    else:
+        return render_template('user-reservations.html', reservant=reservant)
     
-      
+def borrow_book(db, username, ISBN, librarian, address):
+    cursor = db.cursor()
+    sql = f"select title from Book where ISBN='{ISBN}'"
+    cursor.execute(sql)
+    title = cursor.fetchall()[0][0]
+    if request.method == 'POST':
+        confirm = request.form.get('borrow')
+        if confirm=='no': return 'borrowing was denied by user'
+        try:
+            print(librarian)
+            # insert into borrowing
+            sql = f"""insert into Borrowing values ("{username}","{address}", "{ISBN}", CURDATE(), 0, "{librarian}")"""
+            cursor.execute(sql)
+            db.commit()
+            # delete reservation ...
+            cursor.execute(f"call DeleteReservation('{username}','{address}', '{ISBN}')")
+            db.commit()
+            return f'Book is now borrowed by {username}!'
+        except mysql.connector.Error as err:
+            print(err)
+            error_msg = f"Error while borrowing the book: <br> {err} <br>"
+            if 'Duplicate' in error_msg:
+                error_msg += 'That means that you have already borrowed this book today <br>'
+            return error_msg
+    return render_template('borrow-book.html', username=username, ISBN=ISBN, title=title)

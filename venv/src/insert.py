@@ -366,6 +366,7 @@ def insert_borrowing(db, f, write_dml):
     out = ''
     current_datetime = datetime.now()
     today = date.today()
+    cursor.execute("set @var_insert = 1")
     for user in users:
         username, address, type = user
         if random.randint(1,100) < 60: # prob[a user has borrowed from library at least one time] = 0.60
@@ -384,9 +385,9 @@ def insert_borrowing(db, f, write_dml):
                     books.pop()
                     for i in range(random.randint(1,3)):
                         u = random.randint(1,100)
-                        if u < 60: # at least 60% of the borrowings are the last 100 days
+                        if u < 50: # at least 50% of the borrowings are the last 100 days
                             days_before = 100
-                        elif u < 90: # 30% may be at the past year
+                        elif u < 90: # 40% may be at the past year
                             days_before = 500
                         else:
                             days_before = 3000
@@ -398,9 +399,10 @@ def insert_borrowing(db, f, write_dml):
                         random_timestamp = random.uniform(start_timestamp, end_timestamp)
                         start_date = random_timestamp.date()
                         # prob is the probability that the book has been returned
-                        if start_date < date(2023, 5, 1): prob = 98 
-                        elif  start_date < date(2023, 5, 14): prob = 70
-                        else: prob = 30
+                        if start_date < date(2023, 5, 1): prob = 80 
+                        elif  start_date < date(2023, 5, 14): prob = 60
+                        elif start_date < date(2023, 5, 25): prob = 30
+                        else: prob = 10
                         returned = 1 if random.randint(1,100)<prob else 0
                         try:
                             sql = f"insert into Borrowing values('{username}','{address}','{ISBN}','{start_date}',{returned}, '{librarian}')"
@@ -411,5 +413,6 @@ def insert_borrowing(db, f, write_dml):
                                 with open(f, 'a', encoding="utf-8") as fd:
                                     fd.write(sql + ';' + '\n')
                         except mysql.connector.Error as err:
-                            print("Something went wrong: ", err)                   
+                            print("Something went wrong: ", err)  
+    cursor.execute("set @var_insert = 0")                 
     return out

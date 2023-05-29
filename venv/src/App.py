@@ -355,7 +355,7 @@ def librarian(username):
         elif borrower!='':
             return redirect(f'/librarian/{username}/user-borrowings/{borrower}')
         else:
-            return 'Reservations for user - find has not been implemented yet'
+            return redirect(f'/librarian/{username}/user-reservations/{reservant}')
     else:
         if address:
             return render_template("librarian.html", username=username, address=address)
@@ -407,10 +407,33 @@ def user_borrowings_route(username, borrower):
     if  not cursor.fetchall(): return 'This user is not in this school! <br>'
     return user_borrowings(db, borrower)
 
+@app.route('/librarian/<username>/user-reservations/<reservant>', methods=['GET', 'POST']  )
+def user_reservations_route(username, reservant):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    sql = f"select * from User U, User L where L.username='{username}' and U.username='{reservant}' and L.address=U.address"
+    cursor.execute(sql)
+    if  not cursor.fetchall(): return 'This user is not in this school! <br>'
+    return user_reservations(db, reservant, username)
+
 @app.route('/<borrower>/get-borrowings-list')
 def get_borrowings_list_route(borrower):
     if not is_internal_request(): abort(401)
     return get_borrowings_list(db, borrower)
+
+@app.route('/<reservant>/get-reservations-list')
+def get_reservations_list_route(reservant):
+    if not is_internal_request(): abort(401)
+    return get_reservations_list(db, reservant)
+
+@app.route('/librarian/<librarian>/borrow-book/<username>/<ISBN>',  methods=['GET', 'POST'])
+def borrow_book_route(librarian, username, ISBN):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    q = "select address from User where username='{}'".format(username)
+    cursor.execute(q)
+    address = cursor.fetchall()[0][0]
+    return borrow_book(db, username, ISBN, librarian, address)
 
 @app.route("/librarian/<lib_username>/accept-users", methods=['GET', 'POST'])
 def accept_users_route(lib_username):
