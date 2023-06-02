@@ -5,19 +5,28 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>librarian</title>
+    <style>
+        #warning {
+            color: red;
+        }
+    </style>
 </head>
 <body>
     <h1> Librarian page  </h1>
     <a href="/{{username}}/change-password"> Change Password </a><br>
-    <a href="{{username}}/accept-users">View not valid simple users (students, teachers)</a><br>
-    <a href="{{username}}/disable-users" style="color: red;">View valid users (if you want to disable...)</a> <br>
+    <a href="{{username}}/accept-users">View not valid simple users (students, teachers) (and maybe accept some of them)</a><br>
+    <a href="{{username}}/disable-users" style="color: red;">View valid users (and maybe disable some of them)</a> <br>
     <h2>Librarian: {{username}}</h2>
     <h3> in school :{{name}} {{address}}</h3>
+    <fieldset>
+        <legend>Books</legend>
     <a href="/{{username}}/books-in-system">Books in the  library-network System (You can Review them)</a><br>
     <a href="/{{username}}/books-in-this-school"> Books in this school (and maybe update some of them)</a> <br>
-    <a href="{{username}}/insert-book"> Insert Book (if it is not in the two categories above)</a><br>
+    <a href="{{username}}/insert-book"> Insert Book <span id="warning">(only if it is not in the two categories above)</span></a><br>
     <a href="{{username}}/add-existing-book"> Add an existing in the system book to this school</a><br>
-    <a href="/librarian/{{username}}/accept-review"> Accept not approved reviews</a><br>
+    </fieldset>
+    
+    <a href="/librarian/{{username}}/accept-review"> Accept not approved reviews (in this school)</a><br>
     <br><br>
     <fieldset>
         <legend>Questions</legend>
@@ -41,7 +50,7 @@
     <fieldset>
         <legend> Reservations </legend>
         <a href="/librarian/{{username}}/all-reservations">All</a><br>
-        <p>Find a user's reservations (press the button find after you insert username) </p>
+        <p>Find a user's reservations (and maybe register borrowing) (press the button find after you insert username) </p>
         <label for="reservant">username: </label>
         <input type="text" id="reservant" name="reservant">
     </fieldset>
