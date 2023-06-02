@@ -27,9 +27,9 @@ create table User
 password varchar(20) not null,
 type varchar(20) not null check(type in ('student','teacher','librarian', 'admin')),
 valid boolean not null,
-birth_date date,
-first_name varchar(30),
-last_name varchar(30),
+birth_date date not null,
+first_name varchar(30) not  null,
+last_name varchar(30) not null,
 address varchar(50),
 primary key(username)
 );
@@ -39,11 +39,11 @@ create index index_last on User (last_name);
 
 create table School_Library
 (address varchar(50) NOT NULL,
-name varchar(50),
-city varchar(30),
-phone char(10),
-email   varchar(30),
-principal  varchar(50),
+name varchar(50) not null,
+city varchar(30) not null,
+phone char(10) not null,
+email   varchar(30) not null,
+principal  varchar(50) not null,
 primary key (address)
 ) ;
 
@@ -53,12 +53,12 @@ add constraint foreign key (address) references School_Library(address) on updat
 create table Book
 (
     ISBN varchar(20) not null,
-    title varchar(100),
-    publisher varchar(50),
-    pages int check (pages>0),
-    image varchar(200),
-    language varchar(20),
-    summary varchar(1000),
+    title varchar(100) not null,
+    publisher varchar(50) not null,
+    pages int not null check  (pages>0) ,
+    image varchar(200)  not null,
+    language varchar(20) not null,
+    summary varchar(1000) not null,
     primary key (ISBN)
 );
 CREATE INDEX index_title ON Book (title);
@@ -67,7 +67,7 @@ create table Available
 (
     ISBN varchar(20) not null,
     address varchar(50) NOT NULL,
-    books_number int check(books_number>=0),
+    books_number int not null check(books_number>=0) ,
     primary key (ISBN, address),
     constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict,
     constraint foreign key (address) references School_Library(address) on update restrict on delete restrict
@@ -107,9 +107,9 @@ create table Review
 (
     username varchar(20) not null,
     ISBN varchar(20) not null,
-    likert int check (likert in (1,2,3,4,5)),
-    review_text text,
-    approval boolean,
+    likert int not null check (likert in (1,2,3,4,5)) ,
+    review_text text not null,
+    approval boolean not null,
     primary key (username, ISBN),
     constraint foreign key (username) references User(username) on update restrict on delete restrict,
     constraint foreign key (ISBN) references Book(ISBN) on update restrict on delete restrict
@@ -122,9 +122,9 @@ create table Borrowing
     username varchar(20) not null,
     address varchar(50) NOT NULL,
     ISBN varchar(20) not null,
-    start_date date,
-    returned boolean,
-    librarian varchar(20),
+    start_date date not null,
+    returned boolean not null,
+    librarian varchar(20) not null,
     primary key (username, address, ISBN, start_date),
     constraint foreign key (username) references User(username) on update restrict on delete restrict,
     constraint foreign key (address) references School_Library(address) on update restrict on delete restrict,
@@ -139,7 +139,7 @@ create table Reservation
     username varchar(20) not null,
     address varchar(50) NOT NULL,
     ISBN varchar(20) not null,
-    start_date date,
+    start_date date not null,
     primary key (username, address, ISBN),
     constraint foreign key (username) references User(username) on update restrict on delete restrict,
     constraint foreign key (address) references School_Library(address) on update restrict on delete restrict,
