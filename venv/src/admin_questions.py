@@ -15,6 +15,9 @@ def borrowings_per_school_year_month(db):
         month = request.form.get('month')
         
         # for year only
+        # query if you want to get all including 0
+        # e.g. for 2021
+        # (select name, address, number from borrowings_per_school_year where year=2021) union (select name, address, 0  from School_Library WHERE address NOT IN  (select distinct(address) from borrowings_per_school_year where year=2021)); 
         if month=='':
             out1 = f'<h1>Borrowings in each school in year {year}</h1>'
             sql = f"select name, address, number from borrowings_per_school_year where year={year}"

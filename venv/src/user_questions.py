@@ -47,4 +47,19 @@ def books_borrowed(db, username):
         ISBN, title, times = borrowing
         out += f"ISBN = {ISBN}, title = {title}, times = {times} <a href='/{username}/{ISBN}/review'> Review </a> <br>"
         #out += f'username = {username}, type = {type}, address = {address} <br> name = {first_name} {last_name}, <br> address = {address} , ISBN = {ISBN}, title = {title} <br> &emsp; start_date = {start_date}, returned = {bool(returned)}, librarian = {librarian} <br><br>'
+    sql = f"select ISBN, title, start_date, returned as times from borrowing_user_book where username='{username}' order by returned, start_date desc"
+    cursor.execute(sql)
+    borrowings = cursor.fetchall()
+    out += '<br><br> <h1>Books I have borrowed in detail: </h1>'
+    for borrowing in borrowings:
+        ISBN, title, start_date, returned = borrowing
+        cursor.execute(f"select * from delayed_not_returned where username='{username}' and ISBN='{ISBN}' and start_date='{start_date}'")
+        delayed = True if cursor.fetchall() else False
+        if returned:
+            returned_warning = '<span style="color: green">Returned OK</span>'
+        elif delayed:
+            returned_warning = '<span style="color: red">Delayed and not returned</span>'
+        else:
+            returned_warning = '<span style="color: orange">Not returned</span>'
+        out += f'ISBN = {ISBN}, title = {title},<br> start date = {start_date}, returned = {bool(returned)}, {returned_warning} <br><br>'
     return out

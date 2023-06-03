@@ -335,6 +335,18 @@ def books_in_this_school_review(username):
     address = cursor.fetchall()[0][0]
     return books_for_user(db, username, address)
 
+@app.route("/<username>/myreviews")
+def myreviews_route(username):
+    if not is_internal_request(): abort(401)
+    cursor = db.cursor()
+    cursor.execute(f"select username, R.ISBN, B.title, likert, review_text, approval from Review R join Book B on R.ISBN=B.ISBN  where username='{username}' order by approval")
+    reviews = cursor.fetchall()
+    out = '<h1>My Reviews </h1>'
+    for review in reviews:
+        username, ISBN, title, likert, review_text, approval = review
+        out += f"Review for book with title={title} and ISBN={ISBN} by user {username}: <br> &emsp; likert: {likert} <br> Review text: &emsp; {review_text} <br> Approved = {bool(approval)} <br><br>"
+    return out
+
 @app.route("/simple-user/<type>/<username>/books-borrowed")
 def books_borrowed_route(type, username):
     if not is_internal_request(): abort(401)

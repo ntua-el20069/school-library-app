@@ -21,7 +21,7 @@ def all_reservations_lib(db, address):
     sql = "call DeletePastReservations()"
     cursor.execute(sql)
     db.commit()
-    sql = f"select username, ISBN, start_date, type, first_name, last_name, title from reservation_user_book where address='{address}' order by username"
+    sql = f"select username, ISBN, start_date, type, first_name, last_name, title from reservation_user_book where address='{address}' order by ISBN, start_date"
     cursor.execute(sql)
     reservations = cursor.fetchall()
     out = '<h1> All reservations </h1>'
