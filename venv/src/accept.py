@@ -351,7 +351,7 @@ def update_book(db, ISBN, address):
         copies = request.form.get('copies')
         out = ''
         try:
-            sql = '''update Book set title='{}', publisher='{}', pages={}, image='{}', language='{}', summary='{}' where ISBN="{}"'''.format( title, publisher, pages, image, language, summary, ISBN)
+            sql = '''update Book set title="{}", publisher='{}', pages={}, image='{}', language='{}', summary="{}" where ISBN="{}"'''.format( title, publisher, pages, image, language, summary, ISBN)
             cursor.execute(sql)
             sql = 'delete from Author where ISBN="{}"'.format(ISBN)
             cursor.execute(sql)

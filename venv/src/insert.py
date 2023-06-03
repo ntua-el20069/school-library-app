@@ -366,7 +366,11 @@ def insert_borrowing(db, f, write_dml):
     out = ''
     current_datetime = datetime.now()
     today = date.today()
-    cursor.execute("set @var_insert = 1")
+    sql = "set @var_insert = 1"
+    cursor.execute(sql)
+    if write_dml:
+        with open(f, 'a', encoding="utf-8") as fd:
+            fd.write(sql + ';' + '\n')
     for user in users:
         username, address, type = user
         if random.randint(1,100) < 60: # prob[a user has borrowed from library at least one time] = 0.60
@@ -414,5 +418,9 @@ def insert_borrowing(db, f, write_dml):
                                     fd.write(sql + ';' + '\n')
                         except mysql.connector.Error as err:
                             print("Something went wrong: ", err)  
-    cursor.execute("set @var_insert = 0")                 
+    sql = "set @var_insert = 0"
+    cursor.execute(sql)  
+    if write_dml:
+        with open(f, 'a', encoding="utf-8") as fd:
+            fd.write(sql + ';' + '\n')               
     return out
