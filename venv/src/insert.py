@@ -330,7 +330,7 @@ def insert_reservation(db, f, write_dml):
     out = ''
     for user in users:
         username, address, type = user
-        if random.randint(1,100) < 90:
+        if random.randint(1,100) < 95:
             sql = f"select B.ISBN from Book B, Available A  where B.ISBN=A.ISBN and address='{address}' and books_number>=0" # reservations are for both available and unavailable books
             cursor.execute(sql)
             books = cursor.fetchall()
@@ -342,12 +342,13 @@ def insert_reservation(db, f, write_dml):
                     today = date.today()
                     # Calculate the date 7 days ago
                     week_ago = today - timedelta(days=7) # should be days=7
-                    # Generate a random number between 0 and 6
-                    rand_num = random.randint(0, 6)
+                    # Generate a random number between 0 and 7
+                    rand_num = random.randint(0, 7)
                     # Calculate the random date in the past week
-                    start_date = week_ago + timedelta(days=rand_num)
+                    # start_date = week_ago + timedelta(days=rand_num)
+                    start_date = today - timedelta(days=rand_num)
                     try:
-                        sql = f"insert into Reservation values ('{username}', '{address}', '{ISBN}', '{start_date}')"
+                        sql = f"insert into Reservation values ('{username}', '{address}', '{ISBN}', DATE_SUB(CURDATE(), INTERVAL {rand_num} DAY))"
                         cursor.execute(sql)
                         db.commit()
                         out += f"username: {username}, address: {address}, ISBN: {ISBN}, start_date: {start_date} <br>"
@@ -401,7 +402,9 @@ def insert_borrowing(db, f, write_dml):
                         start_timestamp = datetime.combine(past_date, time_only)
                         end_timestamp = datetime.combine(today, time_only)
                         random_timestamp = random.uniform(start_timestamp, end_timestamp)
-                        start_date = random_timestamp.date()
+                        #start_date = random_timestamp.date()
+                        rand_num = random.randint(0,days_before)
+                        start_date = today - timedelta(days=rand_num)
                         # prob is the probability that the book has been returned
                         if start_date < date(2023, 5, 1): prob = 80 
                         elif  start_date < date(2023, 5, 14): prob = 60
@@ -409,7 +412,7 @@ def insert_borrowing(db, f, write_dml):
                         else: prob = 10
                         returned = 1 if random.randint(1,100)<prob else 0
                         try:
-                            sql = f"insert into Borrowing values('{username}','{address}','{ISBN}','{start_date}',{returned}, '{librarian}')"
+                            sql = f"insert into Borrowing values('{username}','{address}','{ISBN}', DATE_SUB(CURDATE(), INTERVAL {rand_num} DAY),{returned}, '{librarian}')"
                             cursor.execute(sql)
                             db.commit()
                             out += f"username= {username}, address= {address}, ISBN= {ISBN},<br> start_date= {start_date} , returned= {returned} , librarian={librarian} <br><br>"
